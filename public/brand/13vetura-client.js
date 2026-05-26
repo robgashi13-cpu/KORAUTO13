@@ -23,6 +23,9 @@
 	  let vehicleDetailRouteKey = "";
 	  let vehicleDetailRecord = null;
 	  let vehicleDetailRequest = null;
+	  let imageErrorRepairInstalled = false;
+	  const sourceDefaultsApplied = new Set();
+	  const sourceDefaultAttempts = new Map();
 	  const themeStorageKey = "13vetura:black-white-theme";
 
   const exactText = new Map([
@@ -36,7 +39,8 @@
     ["Search vehicles", "Kërko vetura"],
     ["Shipping", "Transporti"],
     ["How it works", "Si funksionon"],
-    ["Blog", "Blog"],
+	    ["Blog", "Blog"],
+	    ["Auction", "Nga Koreja te garazhi juaj"],
     ["Contacts", "Kontakt"],
     ["Contact", "Kontakt"],
     ["Contact us", "Na kontaktoni"],
@@ -207,10 +211,14 @@
     ["cars from USA and South Korea", "vetura nga Koreja e Jugut dhe SHBA"],
     ["Vehicles from USA and South Korea", "Vetura nga Koreja e Jugut dhe SHBA"],
     ["vehicles from USA and South Korea", "vetura nga Koreja e Jugut dhe SHBA"],
-    ["from USA and South Korea", "nga Koreja e Jugut dhe SHBA"],
-    ["USA and South Korea", "Koreja e Jugut dhe SHBA"],
-    ["SHBA dhe Koreja e Jugut", "Koreja e Jugut dhe SHBA"],
-    ["USA → Klaipeda", "SHBA → Kosovë"],
+	    ["from USA and South Korea", "nga Koreja e Jugut dhe SHBA"],
+	    ["USA and South Korea", "Koreja e Jugut dhe SHBA"],
+	    ["SHBA dhe Koreja e Jugut", "Koreja e Jugut dhe SHBA"],
+	    ["Nga ankandi deri te garazhi juaj", "Nga Koreja te garazhi juaj"],
+	    ["Gjeni veturën e ardhshme në ankand", "Gjeni veturën e ardhshme në Kore"],
+	    ["USA → Klaipeda", "SHBA → Kosovë"],
+	    ["Lithuania", "Kosovë"],
+	    ["Klaipeda", "Kosovë"],
     ["Klaipeda, LT", business.addressFull],
     ["Klaipeda port", business.addressFull],
     ["Prishtinë, Kosovë", business.addressFull],
@@ -244,9 +252,16 @@
     ["Minor dent scratches", "Gërvishtje të vogla"],
     ["Normal wear", "Konsum normal"],
     ["Not on sale", "Jo në shitje"],
-    ["Not sold", "Nuk u shit"],
-    ["On approval", "Në miratim"]
-  ].sort((a, b) => b[0].length - a[0].length);
+	    ["Not sold", "Nuk u shit"],
+	    ["On approval", "Në miratim"],
+	    ["From auction to your garage", "Nga Koreja te garazhi juaj"],
+	    ["From the auction to your garage", "Nga Koreja te garazhi juaj"],
+	    ["From auction selection to delivery", "Nga Koreja te garazhi juaj"],
+	    ["From the auction to the garage", "Nga Koreja te garazhi juaj"],
+	    ["From auction to garage", "Nga Koreja te garazhi juaj"],
+	    ["Klaipeda", "Kosovë"],
+	    ["Lithuania", "Kosovë"]
+	  ].sort((a, b) => b[0].length - a[0].length);
 
   const attributes = ["alt", "aria-label", "title", "placeholder", "content", "href"];
 	  const translatableAttributeSelector = attributes.map((attribute) => `[${attribute}]`).join(",");
@@ -340,6 +355,28 @@
     }
   };
 
+	  const applyPageSpecificText = () => {
+	    if (!document.body || location.pathname !== "/about") return;
+	
+	    const replacements = new Map([
+	      ["Ankandi", "Koreja"],
+	      ["Nga ankandi deri te garazhi juaj", "Nga Koreja te garazhi juaj"],
+	      ["Gjeni veturën e ardhshme në ankand", "Gjeni veturën e ardhshme në Kore"]
+	    ]);
+	    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
+	      acceptNode: (node) => (shouldSkip(node) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT)
+	    });
+	    const nodes = [];
+	    while (walker.nextNode()) nodes.push(walker.currentNode);
+	
+	    for (const node of nodes) {
+	      const value = node.nodeValue || "";
+	      const trimmed = value.trim();
+	      if (!replacements.has(trimmed)) continue;
+	      node.nodeValue = value.replace(trimmed, replacements.get(trimmed));
+	    }
+	  };
+
   const translateAttributes = (root = document) => {
     for (const element of root.querySelectorAll(translatableAttributeSelector)) {
       for (const attribute of attributes) {
@@ -364,18 +401,46 @@
     }
   };
 
-  const applyLogo = () => {
-    for (const img of document.images) {
-      const src = img.getAttribute("src") || "";
-      const alt = img.getAttribute("alt") || "";
-      if (src.includes("/brand/site-logo.svg") || src.includes("site-logo") || alt.toLowerCase().includes("importauto")) {
-        img.setAttribute("src", business.logoUrl);
-        img.setAttribute("alt", `${business.name} logo`);
-        img.setAttribute("loading", "eager");
-        img.style.objectFit = "contain";
-      }
-    }
-  };
+	  const applyLogo = () => {
+	    for (const img of document.images) {
+	      const src = img.getAttribute("src") || "";
+	      const alt = img.getAttribute("alt") || "";
+	      if (src.includes("/brand/site-logo.svg") || src.includes("site-logo") || alt.toLowerCase().includes("importauto")) {
+	        img.setAttribute("src", business.logoUrl);
+	        img.setAttribute("alt", `${business.name} logo`);
+	        img.setAttribute("loading", "eager");
+	        img.style.objectFit = "contain";
+	        const link = img.closest("a");
+	        if (link) {
+	          link.setAttribute("href", "/");
+	          link.removeAttribute("target");
+	        }
+	      }
+	    }
+	  };
+
+	  const installHomeNavigation = () => {
+	    document.addEventListener(
+	      "click",
+	      (event) => {
+	        const link = event.target?.closest?.("a[href]");
+	        if (!link || event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+	          return;
+	        }
+	
+	        const href = link.getAttribute("href") || "";
+	        const url = new URL(href, window.location.origin);
+	        const text = (link.textContent || "").trim().toLowerCase();
+	        const hasLogo = Boolean(link.querySelector('img[src*="13vetura.com/assets/logo"], img[alt*="13vetura"]'));
+	        if (url.origin !== window.location.origin || (url.pathname !== "/" && text !== "ballina" && !hasLogo)) return;
+	
+	        event.preventDefault();
+	        event.stopPropagation();
+	        window.location.assign("/");
+	      },
+	      true
+	    );
+	  };
 
   const applyMeta = () => {
     document.documentElement.lang = "sq";
@@ -703,6 +768,48 @@
 	      [class*="price-summary"] [class*="text-blue"] {
 	        color: #ffffff !important;
 	      }
+	      .home-hero-section img[src*="/images/home/her-top"],
+	      .home-hero-section .home-hero-bg-overlay,
+	      .home-hero-section .home-hero-bg-glow {
+	        display: none !important;
+	      }
+	      .home-hero-section {
+	        background: #f3f6fa !important;
+	      }
+	      .home-hero-title {
+	        background: none !important;
+	        color: #0f172a !important;
+	        -webkit-text-fill-color: currentColor !important;
+	      }
+	      html.thirteen-vetura-theme .home-hero-section {
+	        background: #080808 !important;
+	      }
+	      html.thirteen-vetura-theme .home-hero-title {
+	        color: #ffffff !important;
+	      }
+	      .dropdown-pop-panel,
+	      .quick-filters-panel,
+	      .catalog-filter-body,
+	      .catalog-filter-body-inner,
+	      .catalog-mobile-filters,
+	      .catalog-mobile-filters > * {
+	        transition-duration: 90ms !important;
+	        transition-timing-function: cubic-bezier(.2,.9,.22,1) !important;
+	        will-change: transform, opacity;
+	      }
+	      .dropdown-pop-enter-from .dropdown-pop-panel,
+	      .dropdown-pop-enter-from.dropdown-pop-panel,
+	      .dropdown-pop-enter-from > .dropdown-pop-panel {
+	        transform: translate3d(0,-4px,0) scale(.992) !important;
+	        filter: none !important;
+	      }
+	      html.thirteen-vetura-detail-loading main {
+	        opacity: 0 !important;
+	      }
+	      html.thirteen-vetura-detail-ready main {
+	        opacity: 1 !important;
+	        transition: opacity 90ms ease-out;
+	      }
 	    `;
     document.head.appendChild(style);
   };
@@ -752,6 +859,83 @@
 	      container.remove();
 	    }
 	  };
+	
+	  const removeBlogLinks = () => {
+	    for (const link of document.querySelectorAll('a[href*="/blog"], a[href="/blog"]')) {
+	      link.remove();
+	    }
+	
+	    for (const element of document.querySelectorAll("a, button")) {
+	      if ((element.textContent || "").trim().toLowerCase() === "blog") {
+	        element.remove();
+	      }
+	    }
+	  };
+	
+	  const applyDefaultAuctionSources = () => {
+	    const key = `${location.pathname}?${location.search}`;
+	    if (sourceDefaultsApplied.has(key)) return;
+	
+	    const params = new URLSearchParams(location.search);
+	    const hasExplicitSource = params.has("source") || params.has("sources") || params.has("domain_id");
+	    const requestedSources = [
+	      params.get("source"),
+	      params.get("sources"),
+	      params.get("domain_id")
+	    ].filter(Boolean).join(",").toLowerCase();
+	    if (hasExplicitSource && !/(^|,|\s)encar($|,|\s)/.test(requestedSources)) return;
+	
+	    const buttons = [...document.querySelectorAll("button")].filter((button) =>
+	      /^(copart|iaai|encar)$/i.test((button.textContent || "").trim())
+	    );
+	    if (!buttons.length) return;
+	
+	    const getSourceName = (button) => (button.textContent || "").trim().toLowerCase();
+	    const isButtonActive = (button) =>
+	      button.classList.contains("is-active") || button.getAttribute("aria-pressed") === "true";
+	    const hasDesiredState = buttons.every((button) => {
+	      const name = getSourceName(button);
+	      const active = isButtonActive(button);
+	      if (name === "encar") return active;
+	      if (name === "copart" || name === "iaai") return !active;
+	      return true;
+	    });
+	
+	    if (hasDesiredState) {
+	      sourceDefaultsApplied.add(key);
+	      sourceDefaultAttempts.delete(key);
+	      return;
+	    }
+	
+	    const attempts = (sourceDefaultAttempts.get(key) || 0) + 1;
+	    sourceDefaultAttempts.set(key, attempts);
+	    for (const button of buttons) {
+	      const name = getSourceName(button);
+	      const isActive = isButtonActive(button);
+	      const shouldClick = ((name === "copart" || name === "iaai") && isActive) || (name === "encar" && !isActive);
+	      if (!shouldClick) continue;
+	      button.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true, view: window }));
+	    }
+	
+	    if (attempts < 10) {
+	      window.setTimeout(applyDefaultAuctionSources, attempts < 4 ? 90 : 240);
+	      return;
+	    }
+	
+	    for (const button of buttons) {
+	      const name = getSourceName(button);
+	      if (name === "copart" || name === "iaai") {
+	        button.classList.remove("is-active");
+	        button.setAttribute("aria-pressed", "false");
+	      }
+	      if (name === "encar") {
+	        button.classList.add("is-active");
+	        button.setAttribute("aria-pressed", "true");
+	      }
+	    }
+	    sourceDefaultsApplied.add(key);
+	    sourceDefaultAttempts.delete(key);
+	  };
 
   const normalizeCarLinks = (root = document) => {
     for (const link of root.querySelectorAll?.('a[href^="/cars/"], a[href^="' + location.origin + '/cars/"]') || []) {
@@ -759,6 +943,23 @@
       link.setAttribute("rel", "noopener noreferrer");
     }
   };
+
+	  const installCatalogCardNavigation = () => {
+	    document.addEventListener(
+	      "click",
+	      (event) => {
+	        if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+	        if (event.target?.closest?.("a,button,input,select,textarea,label")) return;
+	        const card = event.target?.closest?.("article");
+	        const link = card?.querySelector?.('a[href^="/cars/"], a[href^="' + location.origin + '/cars/"]');
+	        if (!link) return;
+	        event.preventDefault();
+	        event.stopPropagation();
+	        window.location.assign(new URL(link.getAttribute("href"), window.location.origin).href);
+	      },
+	      true
+	    );
+	  };
 
   const normalizeSearchLinks = (root = document) => {
     for (const link of root.querySelectorAll?.('a[href^="/search"], a[href^="' + location.origin + '/search"]') || []) {
@@ -845,7 +1046,10 @@
     const [domain, ...lotParts] = routeId.split("-");
     const lot = lotParts.join("-");
     const slug = parts.slice(2).join("-");
-    const vin = (slug.match(/[A-HJ-NPR-Z0-9]{17}/i) || [])[0]?.toUpperCase() || "";
+    const vin =
+      (slug.match(/[A-HJ-NPR-Z0-9]{17}/i) || [])[0]?.toUpperCase() ||
+      (slug.match(/ENCAR\d{5,}/i) || [])[0]?.toUpperCase() ||
+      "";
     const query = new URLSearchParams();
     if (lot) query.set("lot", lot);
     if (vin) query.set("vin", vin);
@@ -853,12 +1057,36 @@
 
     return {
       routeId,
+      domain,
+      lot,
+      vin,
       apiUrl: `/api/catalog/cars/${encodeURIComponent(routeId)}${query.toString() ? `?${query}` : ""}`,
       isEncar: domain === "12" || routeId.toLowerCase().includes("encar")
     };
   };
 
 	  const uniqueValues = (values) => Array.from(new Set(values.filter((value) => typeof value === "string" && value.trim())));
+
+	  const sourceFlag = (value) => {
+	    const normalized = String(value || "").trim().toLowerCase();
+	    if (normalized.includes("encar")) return { flag: "🇰🇷", label: "Encar Korea" };
+	    if (normalized.includes("copart") || normalized.includes("iaai")) return { flag: "🇺🇸", label: "USA auction" };
+	    return null;
+	  };
+
+	  const applySourceFlags = (root = document) => {
+	    for (const element of root.querySelectorAll?.(".catalog-card-source, .catalog-source-text-badge, [class*='source'][class*='badge'], a, span") || []) {
+	      if (element.matches?.("button, .source-switch, .catalog-source-switch") || element.closest?.("button, .source-switch, .catalog-source-switch")) continue;
+	      const text = (element.textContent || "").trim();
+	      if (!/^(ENCAR|Encar|Copart|COPART|IAAI)$/i.test(text)) continue;
+	      const flag = sourceFlag(text);
+	      if (!flag) continue;
+	      element.textContent = flag.flag;
+	      element.setAttribute("aria-label", flag.label);
+	      element.setAttribute("title", flag.label);
+	      element.classList.add("thirteen-vetura-source-flag");
+	    }
+	  };
 	
 	  const setText = (element, value) => {
 	    const next = String(value || "").trim();
@@ -886,6 +1114,9 @@
 
 	  const applyVehicleDetailData = (car) => {
 	    if (!car || typeof car !== "object") return;
+	    document.documentElement.classList.add("thirteen-vetura-detail-ready");
+	    document.documentElement.classList.remove("thirteen-vetura-detail-loading");
+	    document.getElementById("thirteen-vetura-detail-hide-style")?.remove();
 	    const detailRoot = document.querySelector("main") || document.body;
 	    const titleText = String(car.title || [car.year, car.manufacturer, car.model].filter(Boolean).join(" ")).trim();
 	    if (titleText) {
@@ -897,7 +1128,9 @@
 	      }
 	    }
 	
-	    const images = uniqueValues([car.image, ...(Array.isArray(car.images) ? car.images : [])]);
+	    const images = uniqueValues([car.image, ...(Array.isArray(car.images) ? car.images : [])]).filter(
+	      (image) => !/\/\/cars2?\.import-motor\.com\//i.test(image)
+	    );
 	    const galleryTrigger = document.querySelector(".vehicle-gallery-open-trigger");
     const gallerySection = galleryTrigger?.closest("section");
     if (gallerySection && images.length) {
@@ -931,6 +1164,18 @@
 	        replaceTextPattern(detailRoot, new RegExp(`\\b${routeLot.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "g"), String(car.lot), 12);
 	      }
 	    }
+
+	    if (car.originalUrl) {
+	      for (const link of detailRoot.querySelectorAll("a[href]")) {
+	        const text = (link.textContent || "").trim();
+	        if (link.matches(".vehicle-gallery-open-trigger, [data-fancybox]")) continue;
+	        if (/^(encar|copart|iaai|🇰🇷|🇺🇸)$/i.test(text) || link.classList.contains("thirteen-vetura-source-flag")) {
+	          link.setAttribute("href", car.originalUrl);
+	          link.setAttribute("target", "_blank");
+	          link.setAttribute("rel", "noopener noreferrer");
+	        }
+	      }
+	    }
 	
 	    const detailPairs = [
 	      ["Motori", car.engine],
@@ -961,7 +1206,44 @@
         if (node.getAttribute("title") !== totalPrice) node.setAttribute("title", totalPrice);
       }
     }
+	    applySourceFlags(detailRoot);
   };
+
+	  const routeMatchesCar = (route, car) => {
+	    if (!route || !car || typeof car !== "object") return false;
+	    if (route.lot && String(car.lot || "") !== String(route.lot)) return false;
+	    if (route.vin && !route.vin.startsWith("ENCAR") && car.vin && String(car.vin).toUpperCase() !== route.vin) return false;
+	    return true;
+	  };
+
+	  const fetchVehicleByRouteSearch = async (route) => {
+	    if (!route?.lot) return null;
+	    const query = new URLSearchParams({ source: "encar", search: route.lot, limit: "12" });
+	    const response = await fetch(`/api/catalog/cars?${query}`, { cache: "no-store" });
+	    if (!response.ok) return null;
+	    const payload = await response.json();
+	    const cars = Array.isArray(payload?.data) ? payload.data : Array.isArray(payload?.cars) ? payload.cars : [];
+	    return cars.find((car) => String(car?.lot || "") === String(route.lot)) || cars[0] || null;
+	  };
+
+	  const installImageErrorRepair = () => {
+	    if (imageErrorRepairInstalled) return;
+	    imageErrorRepairInstalled = true;
+	    document.addEventListener(
+	      "error",
+	      (event) => {
+	        const image = event.target;
+	        if (!(image instanceof HTMLImageElement)) return;
+	        const src = image.currentSrc || image.src || "";
+	        if (!/\/\/cars2?\.import-motor\.com\//i.test(src) || !vehicleDetailRecord) return;
+	        const replacement = uniqueValues([vehicleDetailRecord.image, ...(Array.isArray(vehicleDetailRecord.images) ? vehicleDetailRecord.images : [])]).find(
+	          (candidate) => candidate !== src && !/\/\/cars2?\.import-motor\.com\//i.test(candidate)
+	        );
+	        if (replacement) image.src = replacement;
+	      },
+	      true
+	    );
+	  };
 
   const patchVehicleDetailFromApi = () => {
     const route = parseVehicleRoute();
@@ -980,18 +1262,26 @@
     vehicleDetailRequest = route.apiUrl;
     fetch(route.apiUrl, { cache: "no-store" })
       .then((response) => (response.ok ? response.json() : null))
-      .then((payload) => {
-        const car = payload?.car || payload?.data || payload;
+      .then(async (payload) => {
+        let car = payload?.car || payload?.data || payload;
+	        if (!routeMatchesCar(route, car)) {
+	          car = await fetchVehicleByRouteSearch(route);
+	        }
         if (!car || typeof car !== "object") return;
         vehicleDetailRouteKey = window.location.pathname;
         vehicleDetailRecord = car;
         applyVehicleDetailData(car);
       })
-      .catch(() => {})
-      .finally(() => {
-        if (vehicleDetailRequest === route.apiUrl) vehicleDetailRequest = null;
-      });
-  };
+	      .catch(() => {})
+	      .finally(() => {
+	        if (vehicleDetailRequest === route.apiUrl) vehicleDetailRequest = null;
+	        window.setTimeout(() => {
+	          document.documentElement.classList.add("thirteen-vetura-detail-ready");
+	          document.documentElement.classList.remove("thirteen-vetura-detail-loading");
+	          document.getElementById("thirteen-vetura-detail-hide-style")?.remove();
+	        }, 1000);
+	      });
+	  };
 
 	  const applyAll = () => {
 	    pending = false;
@@ -999,6 +1289,7 @@
 	    setBlackWhiteThemeEnabled(isBlackWhiteThemeEnabled());
 	    installThemeToggle();
 	    removeLanguageControls();
+	    removeBlogLinks();
 	    applyMeta();
 	    applyLogo();
 	    applyBusinessLinks();
@@ -1006,9 +1297,13 @@
 	    normalizeSearchLinks();
 	    reorderKoreaBeforeUsa();
 	    reorderBrandOptions();
+	    applyDefaultAuctionSources();
 	    patchVehicleDetailFromApi();
+	    installImageErrorRepair();
 	    translateAttributes();
 	    translateTextNodes();
+	    applyPageSpecificText();
+	    applySourceFlags();
   };
 
   const schedule = () => {
@@ -1032,13 +1327,25 @@
   };
 
   const start = () => {
+	    installStyle();
+	    setBlackWhiteThemeEnabled(isBlackWhiteThemeEnabled());
+	    installHomeNavigation();
     installCarLinkNavigation();
-    applyAll();
-    void loadRate();
-	    new MutationObserver(schedule).observe(document.documentElement, {
-	      childList: true,
-	      subtree: true
-	    });
+	    installCatalogCardNavigation();
+	    const startDomPatches = () => {
+	      applyAll();
+	      void loadRate();
+	      new MutationObserver(schedule).observe(document.documentElement, {
+	        childList: true,
+	        subtree: true
+	      });
+	    };
+	
+	    if (document.readyState === "complete") {
+	      window.setTimeout(startDomPatches, 700);
+	    } else {
+	      window.addEventListener("load", () => window.setTimeout(startDomPatches, 700), { once: true });
+	    }
   };
 
   if (document.readyState === "loading") {

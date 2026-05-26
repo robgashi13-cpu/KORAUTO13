@@ -14,6 +14,7 @@ const vehicleSketchRedirects = new Map([
   ["/images/vehicle/car_sketch_front.webp", `${apiOrigin}/images/vehicle/car_sketch_front.webp`],
   ["/images/vehicle/car_sketch_back.webp", `${apiOrigin}/images/vehicle/car_sketch_back.webp`]
 ]);
+const blockedImageHosts = new Set(["cars.import-motor.com", "cars2.import-motor.com"]);
 const moneyQueryParams = new Set([
   "priceFrom",
   "priceTo",
@@ -106,12 +107,38 @@ function escapeNuxtPath(routePath) {
   return routePath.replaceAll("/", "\\u002F");
 }
 
+function getRouteVehicleFallback(requestPath) {
+  const parts = requestPath.split("/").filter(Boolean);
+  const slug = parts.slice(2).join("-");
+  const vin = (slug.match(/[A-HJ-NPR-Z0-9]{17}/i) || [])[0]?.toUpperCase() || "";
+  const title = slug
+    .replace(/[A-HJ-NPR-Z0-9]{17}/i, "")
+    .replace(/-+/g, " ")
+    .trim();
+  return { title, vin };
+}
+
 function sendDynamicCarDetailShell(requestPath, filePath, response) {
   const shellPath = toRoutePath(filePath);
+  const fallback = getRouteVehicleFallback(requestPath);
   const html = readFileSync(filePath, "utf8");
-  const rewritten = html
+  const detailHide = `<style id="thirteen-vetura-detail-hide-style">html.thirteen-vetura-detail-loading main{opacity:0!important}</style><script>document.documentElement.classList.add("thirteen-vetura-detail-loading")</script>`;
+  let rewritten = html
     .replaceAll(shellPath, requestPath)
-    .replaceAll(escapeNuxtPath(shellPath), escapeNuxtPath(requestPath));
+    .replaceAll(escapeNuxtPath(shellPath), escapeNuxtPath(requestPath))
+    .replace("</head>", `${detailHide}</head>`);
+  if (fallback.title) {
+    const slugTitle = fallback.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+    rewritten = rewritten
+      .replaceAll("2017 Kia Soul", fallback.title)
+      .replaceAll("Kia Soul", fallback.title)
+      .replaceAll("2017-kia-soul", slugTitle)
+      .replaceAll("kia\\u002Fsoul", slugTitle.replaceAll("-", "\\u002F"))
+      .replaceAll("kia/soul", slugTitle.replaceAll("-", "/"));
+  }
+  if (fallback.vin) {
+    rewritten = rewritten.replaceAll("KNDJN2A2XH7457838", fallback.vin).replaceAll("kndjn2a2xh7457838", fallback.vin.toLowerCase());
+  }
 
   response.writeHead(200, {
     "Content-Type": "text/html; charset=utf-8",
@@ -334,7 +361,7 @@ function addEncarTotalPriceFee(value) {
     return value;
   }
 
-  const next = { ...value };
+  const next = normalizeEncarMedia(value);
   for (const key of ["price", "buyNowPrice"]) {
     const current = next[key];
     if (typeof current === "string") {
@@ -350,6 +377,27 @@ function addEncarTotalPriceFee(value) {
     }
   }
 
+  return next;
+}
+
+function isBlockedImageUrl(value) {
+  if (typeof value !== "string") return false;
+  try {
+    return blockedImageHosts.has(new URL(value).hostname);
+  } catch {
+    return false;
+  }
+}
+
+function normalizeEncarMedia(value) {
+  const next = { ...value };
+  const images = Array.isArray(next.images) ? next.images.filter((image) => !isBlockedImageUrl(image)) : [];
+  if (images.length) {
+    next.images = images;
+    if (!next.image || isBlockedImageUrl(next.image)) {
+      next.image = images[0];
+    }
+  }
   return next;
 }
 
@@ -513,6 +561,34 @@ async function proxyToApi(request, response) {
   }
 }
 
+async function serveVehicleSketch(requestPath, response) {
+  const upstreamUrl = vehicleSketchRedirects.get(requestPath);
+  try {
+    const upstreamResponse = await fetch(upstreamUrl, {
+      headers: {
+        Accept: "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8",
+        "User-Agent": "13vetura local mirror"
+      }
+    });
+    if (!upstreamResponse.ok || !upstreamResponse.body) {
+      throw new Error(`${upstreamResponse.status} ${upstreamResponse.statusText}`);
+    }
+
+    response.writeHead(200, {
+      "Content-Type": upstreamResponse.headers.get("content-type") || "image/webp",
+      "Cache-Control": "public, max-age=31536000, immutable",
+      "Access-Control-Allow-Origin": "*"
+    });
+    Readable.fromWeb(upstreamResponse.body).pipe(response);
+  } catch (error) {
+    response.writeHead(502, {
+      "Content-Type": "text/plain; charset=utf-8",
+      "Cache-Control": "no-store"
+    });
+    response.end(`Vehicle sketch failed: ${error.message}`);
+  }
+}
+
 const server = createServer((request, response) => {
   const requestPath = new URL(request.url || "/", `http://${request.headers.host || "localhost"}`).pathname;
   const searchDefaultRedirect = getSearchDefaultRedirect(request);
@@ -535,11 +611,7 @@ const server = createServer((request, response) => {
   }
 
   if (vehicleSketchRedirects.has(requestPath)) {
-    response.writeHead(302, {
-      Location: vehicleSketchRedirects.get(requestPath),
-      "Cache-Control": "public, max-age=31536000, immutable"
-    });
-    response.end();
+    void serveVehicleSketch(requestPath, response);
     return;
   }
 
