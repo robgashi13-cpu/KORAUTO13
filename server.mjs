@@ -307,6 +307,14 @@ const apiTextTranslations = new Map([
   ["Retail value", "Vlera e tregut"],
   ["Run and drives", "Ndez dhe ecën"],
   ["Engine starts", "Motori ndizet"],
+  ["No damage", "Pa dëmtime"],
+  ["Accidents free", "Pa aksidente"],
+  ["Present", "Prezent"],
+  ["General", "Të përgjithshme"],
+  ["Vehicle type", "Lloji i automjetit"],
+  ["Drive wheel", "Rrotat aktive"],
+  ["Engine power (HP)", "Fuqia e motorit (HP)"],
+  ["Similar vehicles", "Vetura të ngjashme"],
   ["Front end", "Pjesa e përparme"],
   ["Rear end", "Pjesa e pasme"],
   ["Side", "Anësore"],
@@ -462,6 +470,37 @@ function sortManufacturersPayload(payload) {
   return payload;
 }
 
+function numberFromValue(value) {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value !== "string") return null;
+  const numeric = Number(value.replace(/[\s\u00a0]/g, "").replace(/[^0-9.-]/g, ""));
+  return Number.isFinite(numeric) ? numeric : null;
+}
+
+function sortCarsPayload(payload, sortValue) {
+  const sorters = {
+    price_asc: (left, right) =>
+      (numberFromValue(left?.price || left?.buyNowPrice || left?.currentBid) ?? Number.POSITIVE_INFINITY) -
+      (numberFromValue(right?.price || right?.buyNowPrice || right?.currentBid) ?? Number.POSITIVE_INFINITY),
+    price_desc: (left, right) =>
+      (numberFromValue(right?.price || right?.buyNowPrice || right?.currentBid) ?? Number.NEGATIVE_INFINITY) -
+      (numberFromValue(left?.price || left?.buyNowPrice || left?.currentBid) ?? Number.NEGATIVE_INFINITY),
+    year_desc: (left, right) => (numberFromValue(right?.year) ?? 0) - (numberFromValue(left?.year) ?? 0),
+    mileage_asc: (left, right) =>
+      (numberFromValue(left?.odometerFull || left?.odometer) ?? Number.POSITIVE_INFINITY) -
+      (numberFromValue(right?.odometerFull || right?.odometer) ?? Number.POSITIVE_INFINITY)
+  };
+  const sorter = sorters[sortValue];
+  if (!sorter) return payload;
+
+  const sortItems = (items) => [...items].sort(sorter);
+  if (Array.isArray(payload)) return sortItems(payload);
+  if (Array.isArray(payload?.data)) return { ...payload, data: sortItems(payload.data) };
+  if (Array.isArray(payload?.cars)) return { ...payload, cars: sortItems(payload.cars) };
+  if (Array.isArray(payload?.items)) return { ...payload, items: sortItems(payload.items) };
+  return payload;
+}
+
 function buildApiUrl(request, usdToEur) {
   const targetUrl = new URL(request.url || "/", apiOrigin);
 
@@ -539,7 +578,7 @@ async function proxyToApi(request, response) {
             }
           : requestPath === "/api/catalog/manufacturers"
             ? sortManufacturersPayload(transformApiPayload(payload, rates.usdToEur))
-            : transformApiPayload(payload, rates.usdToEur);
+            : sortCarsPayload(transformApiPayload(payload, rates.usdToEur), targetUrl.searchParams.get("sort"));
       writeJson(response, upstreamResponse.status, transformedPayload);
       return;
     }

@@ -24,9 +24,18 @@
 	  let vehicleDetailRecord = null;
 	  let vehicleDetailRequest = null;
 	  let imageErrorRepairInstalled = false;
+	  let sortControlInstalled = false;
 	  const sourceDefaultsApplied = new Set();
 	  const sourceDefaultAttempts = new Map();
-	  const themeStorageKey = "13vetura:black-white-theme";
+	  const themeStorageKey = "13vetura:dark-theme-default-v2";
+	  const catalogSortStorageKey = "13vetura:catalog-sort";
+	  try {
+	    if (window.localStorage.getItem(themeStorageKey) !== "0") {
+	      document.documentElement.classList.add("thirteen-vetura-theme");
+	    }
+	  } catch {
+	    document.documentElement.classList.add("thirteen-vetura-theme");
+	  }
 
   const exactText = new Map([
     ["ImportAuto", business.name],
@@ -78,6 +87,42 @@
     ["Cylinders", "Cilindrat"],
     ["Sale status", "Statusi i shitjes"],
     ["Damage", "Dëmtimi"],
+    ["Highlights", "Pikat kryesore"],
+    ["HIGHLIGHTS", "PIKAT KRYESORE"],
+    ["Source", "Burimi"],
+    ["SOURCE", "BURIMI"],
+    ["Vehicle specs", "Specifikat e veturës"],
+    ["VEHICLE SPECS", "SPECIFIKAT E VETURËS"],
+    ["Generation", "Gjenerata"],
+    ["Trim", "Paketa"],
+    ["Sale type", "Lloji i shitjes"],
+    ["Engine power (HP)", "Fuqia e motorit (HP)"],
+    ["Drive wheel", "Rrotat aktive"],
+    ["Vehicle type", "Lloji i automjetit"],
+    ["View photos", "Shiko fotot"],
+    ["Save", "Ruaj"],
+    ["Saved", "E ruajtur"],
+    ["Sales history", "Historiku i shitjeve"],
+    ["Encar condition, incidents and options", "Gjendja, incidentet dhe opsionet Encar"],
+    ["Consolidated data from Encar inspection, exterior markers, and mechanical checks.", "Të dhëna të përmbledhura nga inspektimi Encar, shenjat e jashtme dhe kontrollet mekanike."],
+    ["Installed options", "Opsionet e instaluara"],
+    ["Body incident map", "Harta e incidenteve në karroceri"],
+    ["Exterior body", "Karroceria e jashtme"],
+    ["Inner structure", "Struktura e brendshme"],
+    ["Replaced", "Zëvendësuar"],
+    ["Repaired", "Riparuar"],
+    ["Corrosion", "Korrozion"],
+    ["Scratched", "Gërvishtur"],
+    ["Other issue", "Problem tjetër"],
+    ["Damaged", "Dëmtuar"],
+    ["See all", "Shiko të gjitha"],
+    ["No damage", "Pa dëmtime"],
+    ["Accidents", "Aksidente"],
+    ["Accidents free", "Pa aksidente"],
+    ["Present", "Prezent"],
+    ["General", "Të përgjithshme"],
+    ["Similar vehicles", "Vetura të ngjashme"],
+    ["Interested in this vehicle?", "Jeni të interesuar për këtë veturë?"],
     ["All", "Të gjitha"],
     ["Next 24 hours", "24 orët e ardhshme"],
     ["Buy now", "Bli tani"],
@@ -180,6 +225,12 @@
     ["Catalog", "Katalogu"],
     ["Previous", "Prapa"],
     ["Next", "Para"],
+    ["Cheapest", "Më të lirat"],
+    ["Most expensive", "Më të shtrenjtat"],
+    ["Newest", "Më të rejat"],
+    ["Lowest mileage", "Kilometrazhi më i ulët"],
+    ["Sort", "Rendit"],
+    ["Sort by", "Rendit sipas"],
     ["Loading...", "Duke u ngarkuar..."],
     ["Copy", "Kopjo"],
     ["Copied", "U kopjua"],
@@ -243,6 +294,22 @@
     ["Search by VIN or lot number", "Kërko me VIN ose numër loti"],
     ["Enter Brand / Model / VIN / Lot", "Shkruaj markën / modelin / VIN / lotin"],
     ["Current bid", "Oferta aktuale"],
+    ["View 20 photos", "Shiko 20 foto"],
+    ["View 19 photos", "Shiko 19 foto"],
+    ["View 18 photos", "Shiko 18 foto"],
+    ["View 17 photos", "Shiko 17 foto"],
+    ["View 16 photos", "Shiko 16 foto"],
+    ["View 15 photos", "Shiko 15 foto"],
+    ["View photos", "Shiko fotot"],
+    ["No damage", "Pa dëmtime"],
+    ["Accidents free", "Pa aksidente"],
+    ["Interested in this vehicle?", "Jeni të interesuar për këtë veturë?"],
+    ["We can help with purchasing and shipping this vehicle.", "Mund t'ju ndihmojmë me blerjen dhe transportin e kësaj veture."],
+    ["Installed options", "Opsionet e instaluara"],
+    ["Body incident map", "Harta e incidenteve në karroceri"],
+    ["Exterior body", "Karroceria e jashtme"],
+    ["Inner structure", "Struktura e brendshme"],
+    ["Other issue", "Problem tjetër"],
     ["Buy now", "Bli tani"],
     ["Run and drives", "Ndez dhe ecën"],
     ["Engine starts", "Motori ndizet"],
@@ -294,9 +361,9 @@
 
 	  const isBlackWhiteThemeEnabled = () => {
 	    try {
-	      return window.localStorage.getItem(themeStorageKey) === "1";
+	      return window.localStorage.getItem(themeStorageKey) !== "0";
 	    } catch {
-	      return false;
+	      return true;
 	    }
 	  };
 
@@ -405,7 +472,7 @@
 	    for (const img of document.images) {
 	      const src = img.getAttribute("src") || "";
 	      const alt = img.getAttribute("alt") || "";
-	      if (src.includes("/brand/site-logo.svg") || src.includes("site-logo") || alt.toLowerCase().includes("importauto")) {
+	      if (src.includes("/brand/site-logo.svg") || src.includes("site-logo") || /importauto|13vetura|logo/i.test(alt) || /logo/i.test(src)) {
 	        img.setAttribute("src", business.logoUrl);
 	        img.setAttribute("alt", `${business.name} logo`);
 	        img.setAttribute("loading", "eager");
@@ -442,9 +509,41 @@
 	    );
 	  };
 
-  const applyMeta = () => {
+	  const applyMeta = () => {
     document.documentElement.lang = "sq";
     document.title = translate(document.title || "13vetura");
+	    document.documentElement.classList.toggle("thirteen-vetura-ios", /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1));
+	    const metaValues = [
+	      ["theme-color", "#080808"],
+	      ["apple-mobile-web-app-capable", "yes"],
+	      ["apple-mobile-web-app-status-bar-style", "black-translucent"],
+	      ["apple-mobile-web-app-title", business.name],
+	      ["format-detection", "telephone=yes"]
+	    ];
+	    for (const [name, content] of metaValues) {
+	      let meta = document.querySelector(`meta[name="${name}"]`);
+	      if (!meta) {
+	        meta = document.createElement("meta");
+	        meta.setAttribute("name", name);
+	        document.head.appendChild(meta);
+	      }
+	      meta.setAttribute("content", content);
+	    }
+	    let icon = document.querySelector('link[rel="apple-touch-icon"]');
+	    if (!icon) {
+	      icon = document.createElement("link");
+	      icon.setAttribute("rel", "apple-touch-icon");
+	      document.head.appendChild(icon);
+	    }
+	    icon.setAttribute("href", business.logoUrl);
+	    for (const href of ["https://ci.encar.com", "https://cs.copart.com", "https://vis.iaai.com", "https://13vetura.com"]) {
+	      if (document.querySelector(`link[rel="preconnect"][href="${href}"]`)) continue;
+	      const link = document.createElement("link");
+	      link.setAttribute("rel", "preconnect");
+	      link.setAttribute("href", href);
+	      link.setAttribute("crossorigin", "");
+	      document.head.appendChild(link);
+	    }
     for (const selector of [
       'meta[name="description"]',
       'meta[property="og:title"]',
@@ -599,6 +698,11 @@
       html.thirteen-vetura-theme [class*="text-blue"],
       html.thirteen-vetura-theme [class*="text-[#007BFF]"],
       html.thirteen-vetura-theme [class*="text-[#007bff]"],
+      html.thirteen-vetura-theme [class*="text-[#0A2540]"],
+      html.thirteen-vetura-theme [class*="text-[#0a2540]"],
+      html.thirteen-vetura-theme [class*="text-[#123454]"],
+      html.thirteen-vetura-theme [class*="text-[#1f3854]"],
+      html.thirteen-vetura-theme [class*="text-[#4f6b8b]"],
       html.thirteen-vetura-theme [class*="text-indigo"],
       html.thirteen-vetura-theme [class*="hover:text-blue"]:hover {
         color: var(--vetura-primary) !important;
@@ -722,8 +826,14 @@
       img[src*="13vetura.com/assets/logo"] {
         object-fit: contain !important;
         max-height: 54px;
+        min-width: 118px;
         width: auto;
       }
+	      html.thirteen-vetura-theme img[src*="13vetura.com/assets/logo"] {
+	        background: #ffffff !important;
+	        border-radius: 8px !important;
+	        padding: 4px !important;
+	      }
 	      .thirteen-vetura-business-note {
 	        font-size: 0.875rem;
 	        color: inherit;
@@ -786,6 +896,157 @@
 	      }
 	      html.thirteen-vetura-theme .home-hero-title {
 	        color: #ffffff !important;
+	      }
+	      html.thirteen-vetura-theme .thirteen-vetura-positive,
+	      html.thirteen-vetura-positive {
+	        color: #22c55e !important;
+	        font-weight: 800 !important;
+	      }
+	      .thirteen-vetura-sort-control {
+	        align-items: center;
+	        display: inline-flex;
+	        gap: 8px;
+	        margin: 0 0 14px auto;
+	        max-width: 100%;
+	      }
+	      .thirteen-vetura-sort-control label {
+	        color: inherit;
+	        font-size: 13px;
+	        font-weight: 800;
+	        white-space: nowrap;
+	      }
+	      .thirteen-vetura-sort-control select {
+	        min-height: 42px;
+	        border-radius: 10px;
+	        border: 1px solid rgba(255,255,255,.18);
+	        background: #111111;
+	        color: #ffffff;
+	        font-size: 14px;
+	        font-weight: 800;
+	        padding: 0 36px 0 12px;
+	      }
+	      html {
+	        -webkit-text-size-adjust: 100%;
+	        text-size-adjust: 100%;
+	      }
+	      body {
+	        overscroll-behavior-y: none;
+	        text-rendering: optimizeLegibility;
+	      }
+	      img {
+	        content-visibility: auto;
+	      }
+	      article {
+	        contain: layout paint style;
+	      }
+	      button,
+	      a,
+	      input,
+	      select {
+	        touch-action: manipulation;
+	      }
+	      @media (max-width: 820px) {
+	        html,
+	        body,
+	        #__nuxt {
+	          max-width: 100%;
+	          overflow-x: hidden !important;
+	        }
+	        body {
+	          padding-bottom: env(safe-area-inset-bottom);
+	        }
+	        header {
+	          position: sticky !important;
+	          top: 0 !important;
+	          z-index: 60 !important;
+	        }
+	        header nav,
+	        header [class*="navigation"] {
+	          -webkit-overflow-scrolling: touch;
+	          overflow-x: auto !important;
+	          scrollbar-width: none;
+	        }
+	        header nav::-webkit-scrollbar {
+	          display: none;
+	        }
+	        main {
+	          min-width: 0 !important;
+	        }
+	        section,
+	        article,
+	        aside,
+	        [class*="grid"],
+	        [class*="flex"] {
+	          min-width: 0 !important;
+	        }
+	        article {
+	          border-radius: 8px !important;
+	          margin-inline: 0 !important;
+	        }
+	        article img {
+	          height: auto !important;
+	          max-height: 260px !important;
+	          object-fit: cover !important;
+	        }
+	        .catalog-filter-panel,
+	        .catalog-mobile-filters,
+	        aside[class*="filter"],
+	        [class*="filter"][class*="panel"] {
+	          max-height: calc(100dvh - 74px) !important;
+	          overflow-y: auto !important;
+	          -webkit-overflow-scrolling: touch;
+	        }
+	        .dropdown-pop-panel,
+	        .quick-filters-panel,
+	        [role="listbox"],
+	        [role="menu"] {
+	          max-height: min(74dvh, 560px) !important;
+	          max-width: calc(100vw - 20px) !important;
+	          overflow: auto !important;
+	          -webkit-overflow-scrolling: touch;
+	          transform: translateZ(0);
+	        }
+	        input,
+	        select,
+	        textarea,
+	        button,
+	        a[role="button"] {
+	          font-size: 16px !important;
+	          min-height: 44px;
+	        }
+	        .thirteen-vetura-theme-toggle {
+	          height: 40px;
+	          min-width: 42px;
+	          padding: 0 10px;
+	        }
+	        .thirteen-vetura-sort-control {
+	          display: grid;
+	          grid-template-columns: 1fr;
+	          margin: 0 0 12px 0;
+	          width: 100%;
+	        }
+	        .thirteen-vetura-sort-control select {
+	          width: 100%;
+	        }
+	        .home-hero-section {
+	          min-height: auto !important;
+	          padding-block: 26px !important;
+	        }
+	        .home-hero-title,
+	        h1 {
+	          font-size: clamp(28px, 9vw, 42px) !important;
+	          line-height: 1.05 !important;
+	        }
+	      }
+	      @media (prefers-reduced-motion: reduce) {
+	        *,
+	        *::before,
+	        *::after {
+	          animation-duration: .01ms !important;
+	          animation-iteration-count: 1 !important;
+	          scroll-behavior: auto !important;
+	          transition-duration: .01ms !important;
+	        }
 	      }
 	      .dropdown-pop-panel,
 	      .quick-filters-panel,
@@ -868,6 +1129,120 @@
 	    for (const element of document.querySelectorAll("a, button")) {
 	      if ((element.textContent || "").trim().toLowerCase() === "blog") {
 	        element.remove();
+	      }
+	    }
+	  };
+
+	  const installSortControl = () => {
+	    if (sortControlInstalled || location.pathname !== "/search") return;
+	    const main = document.querySelector("main main") || document.querySelector("main");
+	    if (!main) return;
+	
+	    const host =
+	      [...main.children].find((element) => element.querySelector?.("article")) ||
+	      [...main.querySelectorAll("div, section")].find((element) => element.querySelector?.("article"));
+	    if (!host || document.getElementById("thirteen-vetura-sort")) return;
+	
+	    const params = new URLSearchParams(location.search);
+	    const wrap = document.createElement("div");
+	    wrap.className = "thirteen-vetura-sort-control";
+	    const label = document.createElement("label");
+	    label.setAttribute("for", "thirteen-vetura-sort");
+	    label.textContent = "Rendit";
+	    const select = document.createElement("select");
+	    select.id = "thirteen-vetura-sort";
+	    select.innerHTML = `
+	      <option value="">Të rekomanduara</option>
+	      <option value="price_asc">Më të lirat</option>
+	      <option value="price_desc">Më të shtrenjtat</option>
+	      <option value="year_desc">Më të rejat</option>
+	      <option value="mileage_asc">Kilometrazhi më i ulët</option>
+	    `;
+	    let savedSort = "";
+	    try {
+	      savedSort = window.sessionStorage.getItem(catalogSortStorageKey) || "";
+	    } catch {}
+	    select.value = params.get("sort") || savedSort || "";
+	    select.addEventListener("change", () => {
+	      try {
+	        if (select.value) window.sessionStorage.setItem(catalogSortStorageKey, select.value);
+	        else window.sessionStorage.removeItem(catalogSortStorageKey);
+	      } catch {}
+	      applyCatalogSort();
+	    });
+	    wrap.append(label, select);
+	    host.parentElement?.insertBefore(wrap, host);
+	    sortControlInstalled = true;
+	    applyCatalogSort();
+	  };
+
+	  const numberFromText = (value) => {
+	    const numeric = Number(String(value || "").replace(/[\s\u00a0]/g, "").replace(/[^0-9.-]/g, ""));
+	    return Number.isFinite(numeric) ? numeric : null;
+	  };
+
+	  const getArticleMetric = (article, sortValue) => {
+	    const text = article.innerText || "";
+	    if (sortValue === "price_asc" || sortValue === "price_desc") {
+	      return numberFromText(text.match(/€[\d\s\u00a0]+/)?.[0]) ?? (sortValue === "price_asc" ? Number.POSITIVE_INFINITY : Number.NEGATIVE_INFINITY);
+	    }
+	    if (sortValue === "year_desc") {
+	      return numberFromText(text.match(/\b(19|20)\d{2}\b/)?.[0]) ?? 0;
+	    }
+	    if (sortValue === "mileage_asc") {
+	      return numberFromText(text.match(/≈\s*[\d,\s\u00a0]+\s*km/i)?.[0] || text.match(/[\d,\s\u00a0]+\s*km/i)?.[0]) ?? Number.POSITIVE_INFINITY;
+	    }
+	    return 0;
+	  };
+
+	  const applyCatalogSort = () => {
+	    if (location.pathname !== "/search") return;
+	    const select = document.getElementById("thirteen-vetura-sort");
+	    const sortValue = select?.value || "";
+	    if (!sortValue) return;
+	    const articles = [...document.querySelectorAll("article")].filter((article) => article.closest("main"));
+	    if (articles.length < 2) return;
+	    const container = articles[0].parentElement;
+	    if (!container || !articles.every((article) => article.parentElement === container)) return;
+	    const sorted = articles
+	      .map((article, index) => ({ article, index, value: getArticleMetric(article, sortValue) }))
+	      .sort((left, right) => {
+	        if (left.value !== right.value) {
+	          return sortValue === "price_desc" || sortValue === "year_desc" ? right.value - left.value : left.value - right.value;
+	        }
+	        return left.index - right.index;
+	      });
+	    for (const item of sorted) {
+	      container.appendChild(item.article);
+	    }
+	  };
+
+	  const markPositiveValues = () => {
+	    const nodes = [...document.querySelectorAll("span, div, p, dd, strong")].filter((node) => {
+	      if (node.children.length > 0) return false;
+	      return /^(po|yes|prezent|ndez dhe ecën)$/i.test((node.textContent || "").trim());
+	    });
+	    for (const node of nodes) {
+	      node.classList.add("thirteen-vetura-positive");
+	    }
+	  };
+
+	  const optimizeMedia = () => {
+	    let eagerCount = 0;
+	    for (const image of document.images) {
+	      if (image.src.includes("13vetura.com/assets/logo")) {
+	        image.setAttribute("loading", "eager");
+	        image.setAttribute("fetchpriority", "high");
+	        continue;
+	      }
+	      image.setAttribute("decoding", "async");
+	      if (eagerCount < 2 && image.closest("main")) {
+	        image.setAttribute("loading", "eager");
+	        image.setAttribute("fetchpriority", "high");
+	        eagerCount += 1;
+	      } else {
+	        image.setAttribute("loading", "lazy");
+	        image.setAttribute("fetchpriority", "low");
 	      }
 	    }
 	  };
@@ -1297,6 +1672,8 @@
 	    normalizeSearchLinks();
 	    reorderKoreaBeforeUsa();
 	    reorderBrandOptions();
+	    installSortControl();
+	    applyCatalogSort();
 	    applyDefaultAuctionSources();
 	    patchVehicleDetailFromApi();
 	    installImageErrorRepair();
@@ -1304,6 +1681,8 @@
 	    translateTextNodes();
 	    applyPageSpecificText();
 	    applySourceFlags();
+	    markPositiveValues();
+	    optimizeMedia();
   };
 
   const schedule = () => {
