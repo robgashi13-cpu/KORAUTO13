@@ -1,7 +1,9 @@
 (() => {
   const business = {
     name: "13vetura",
-    logoUrl: "https://13vetura.com/assets/logo-EwEQIT7A.png",
+    logoUrl: "/brand/korauto-logo.jpg",
+    iconUrl: "/brand/korauto-icon.jpg",
+    logoAlt: "KORAUTO logo",
     phonePrimary: "+38348181116",
     phoneSecondary: "+38346181117",
     phoneTertiary: "+38345105588",
@@ -25,6 +27,8 @@
 	  let vehicleDetailRequest = null;
 	  let imageErrorRepairInstalled = false;
 	  let sortControlInstalled = false;
+	  let lastAppliedAt = 0;
+	  let deferredSchedule = 0;
 	  const sourceDefaultsApplied = new Set();
 	  const sourceDefaultAttempts = new Map();
 	  const themeStorageKey = "13vetura:dark-theme-default-v2";
@@ -50,6 +54,23 @@
     ["How it works", "Si funksionon"],
 	    ["Blog", "Blog"],
 	    ["Auction", "Nga Koreja te garazhi juaj"],
+    ["Free car sourcing - pay only if we win", "Gjetje veture falas - paguani vetëm nëse fitojmë"],
+    ["Calculate delivery", "Llogarit transportin"],
+    ["Automobile", "Automobil"],
+    ["Motorcycle", "Motoçikletë"],
+    ["More", "Më shumë"],
+    ["All makes", "Të gjitha markat"],
+    ["All models", "Të gjitha modelet"],
+    ["All generations", "Të gjitha gjeneratat"],
+    ["From year", "Nga viti"],
+    ["To year", "Deri në vit"],
+    ["From", "Nga"],
+    ["To", "Deri"],
+    ["OR", "OSE"],
+    ["Show", "Shfaq"],
+    ["Show Vetura", "Shfaq veturat"],
+    ["Show cars", "Shfaq veturat"],
+    ["By submitting this form, you agree to the kushtet and rregullat.", "Duke dërguar këtë formular, pranoni kushtet dhe rregullat."],
     ["Contacts", "Kontakt"],
     ["Contact", "Kontakt"],
     ["Contact us", "Na kontaktoni"],
@@ -153,6 +174,11 @@
     ["Sold", "Shitur"],
     ["Not sold", "Nuk u shit"],
     ["On approval", "Në miratim"],
+    ["Upcoming", "Në pritje"],
+    ["UPCOMING", "NË PRITJE"],
+    ["Enhanced", "E përmirësuar"],
+    ["Green", "E gjelbër"],
+    ["Hydrogen", "Hidrogjen"],
     ["Coming soon", "Së shpejti"],
     ["TBA", "Në pritje"],
     ["Run and drives", "Ndez dhe ecën"],
@@ -260,6 +286,9 @@
     ["importauto.com", "13vetura.com"],
     ["Cars from USA and South Korea", "Vetura nga Koreja e Jugut dhe SHBA"],
     ["cars from USA and South Korea", "vetura nga Koreja e Jugut dhe SHBA"],
+    ["Cars from the USA and South Korea", "Vetura nga Koreja e Jugut dhe SHBA"],
+    ["Cars from the South Korea and USA", "Vetura nga Koreja e Jugut dhe SHBA"],
+    ["Cars from the Koreja e Jugut dhe SHBA", "Vetura nga Koreja e Jugut dhe SHBA"],
     ["Vehicles from USA and South Korea", "Vetura nga Koreja e Jugut dhe SHBA"],
     ["vehicles from USA and South Korea", "vetura nga Koreja e Jugut dhe SHBA"],
 	    ["from USA and South Korea", "nga Koreja e Jugut dhe SHBA"],
@@ -293,6 +322,16 @@
     ["Search vehicle", "Kërko veturë"],
     ["Search by VIN or lot number", "Kërko me VIN ose numër loti"],
     ["Enter Brand / Model / VIN / Lot", "Shkruaj markën / modelin / VIN / lotin"],
+    ["Engine:", "Motori:"],
+    ["Odometer:", "Kilometrazhi:"],
+    ["Location:", "Lokacioni:"],
+    ["Condition:", "Gjendja:"],
+    ["Seller:", "Shitësi:"],
+    ["Key included:", "Çelësi i përfshirë:"],
+    ["Damage:", "Dëmtimi:"],
+    ["Gearbox:", "Transmisioni:"],
+    ["Fuel:", "Karburanti:"],
+    ["Spin", "Rrotullo"],
     ["Current bid", "Oferta aktuale"],
     ["View 20 photos", "Shiko 20 foto"],
     ["View 19 photos", "Shiko 19 foto"],
@@ -468,14 +507,24 @@
     }
   };
 
+	  const logoPattern = /(?:site-logo|logo-EwEQIT7A|13vetura\.com\/assets\/logo|\/brand\/korauto-|importauto|13vetura|korauto)/i;
+	
+	  const isSiteLogo = (image) => {
+	    const src = image.getAttribute("src") || "";
+	    const alt = image.getAttribute("alt") || "";
+	    if (src.includes("/images/brands/") || src.includes("/cars/") || src.includes("option_images")) return false;
+	    if (logoPattern.test(src) || logoPattern.test(alt)) return true;
+	    return Boolean(image.closest("header, footer") && /logo/i.test(`${src} ${alt}`));
+	  };
+	
 	  const applyLogo = () => {
 	    for (const img of document.images) {
-	      const src = img.getAttribute("src") || "";
-	      const alt = img.getAttribute("alt") || "";
-	      if (src.includes("/brand/site-logo.svg") || src.includes("site-logo") || /importauto|13vetura|logo/i.test(alt) || /logo/i.test(src)) {
+	      if (isSiteLogo(img)) {
 	        img.setAttribute("src", business.logoUrl);
-	        img.setAttribute("alt", `${business.name} logo`);
+	        img.setAttribute("alt", business.logoAlt);
 	        img.setAttribute("loading", "eager");
+	        img.setAttribute("decoding", "async");
+	        img.setAttribute("fetchpriority", "high");
 	        img.style.objectFit = "contain";
 	        const link = img.closest("a");
 	        if (link) {
@@ -498,7 +547,7 @@
 	        const href = link.getAttribute("href") || "";
 	        const url = new URL(href, window.location.origin);
 	        const text = (link.textContent || "").trim().toLowerCase();
-	        const hasLogo = Boolean(link.querySelector('img[src*="13vetura.com/assets/logo"], img[alt*="13vetura"]'));
+	        const hasLogo = Boolean(link.querySelector('img[src*="/brand/korauto-"], img[src*="13vetura.com/assets/logo"], img[alt*="13vetura"], img[alt*="KORAUTO"]'));
 	        if (url.origin !== window.location.origin || (url.pathname !== "/" && text !== "ballina" && !hasLogo)) return;
 	
 	        event.preventDefault();
@@ -529,13 +578,20 @@
 	      }
 	      meta.setAttribute("content", content);
 	    }
-	    let icon = document.querySelector('link[rel="apple-touch-icon"]');
-	    if (!icon) {
-	      icon = document.createElement("link");
-	      icon.setAttribute("rel", "apple-touch-icon");
-	      document.head.appendChild(icon);
-	    }
-	    icon.setAttribute("href", business.logoUrl);
+	    const upsertLink = (rel, href, type = "image/jpeg") => {
+	      let link = document.querySelector(`link[rel="${rel}"]`);
+	      if (!link) {
+	        link = document.createElement("link");
+	        link.setAttribute("rel", rel);
+	        document.head.appendChild(link);
+	      }
+	      link.setAttribute("href", href);
+	      if (type) link.setAttribute("type", type);
+	      return link;
+	    };
+	    upsertLink("apple-touch-icon", business.iconUrl);
+	    upsertLink("icon", business.iconUrl);
+	    upsertLink("shortcut icon", business.iconUrl);
 	    for (const href of ["https://ci.encar.com", "https://cs.copart.com", "https://vis.iaai.com", "https://13vetura.com"]) {
 	      if (document.querySelector(`link[rel="preconnect"][href="${href}"]`)) continue;
 	      const link = document.createElement("link");
@@ -554,6 +610,18 @@
       const meta = document.querySelector(selector);
       if (meta) meta.setAttribute("content", translate(meta.getAttribute("content") || ""));
     }
+	    for (const [property, content] of [
+	      ["og:image", business.iconUrl],
+	      ["twitter:image", business.iconUrl]
+	    ]) {
+	      let meta = document.querySelector(`meta[property="${property}"], meta[name="${property}"]`);
+	      if (!meta) {
+	        meta = document.createElement("meta");
+	        meta.setAttribute(property.startsWith("og:") ? "property" : "name", property);
+	        document.head.appendChild(meta);
+	      }
+	      meta.setAttribute("content", new URL(content, window.location.origin).href);
+	    }
   };
 
   const installStyle = () => {
@@ -564,14 +632,16 @@
 	      html.thirteen-vetura-theme {
 	        color-scheme: dark;
 	        --vetura-bg: #080808;
-        --vetura-surface: #101010;
-        --vetura-card: #161616;
-        --vetura-elevated: #1f1f1f;
-        --vetura-border: #2b2b2b;
-        --vetura-text: #f5f5f5;
-        --vetura-muted: #a3a3a3;
-        --vetura-soft: #d4d4d4;
+        --vetura-surface: #0f0f10;
+        --vetura-card: #171717;
+        --vetura-elevated: #232323;
+        --vetura-border: #343434;
+        --vetura-text: #ffffff;
+        --vetura-muted: #d0d0d0;
+        --vetura-soft: #eeeeee;
         --vetura-primary: #ffffff;
+        --vetura-price: #ffffff;
+        --vetura-success: #22c55e;
       }
       html.thirteen-vetura-theme,
       html.thirteen-vetura-theme body,
@@ -581,6 +651,8 @@
       }
       html.thirteen-vetura-theme body {
         font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        -webkit-font-smoothing: antialiased;
+        text-rendering: optimizeLegibility;
       }
       html.thirteen-vetura-theme header,
       html.thirteen-vetura-theme nav,
@@ -616,7 +688,6 @@
       html.thirteen-vetura-theme [class*="ring-white"] {
         border-color: var(--vetura-border) !important;
         --tw-ring-color: var(--vetura-border) !important;
-        box-shadow: 0 0 0 1px var(--vetura-border) !important;
       }
       html.thirteen-vetura-theme input,
       html.thirteen-vetura-theme select,
@@ -696,8 +767,14 @@
         color: var(--vetura-text) !important;
       }
       html.thirteen-vetura-theme [class*="text-blue"],
+      html.thirteen-vetura-theme [class*="text-sky"],
+      html.thirteen-vetura-theme [class*="text-cyan"],
       html.thirteen-vetura-theme [class*="text-[#007BFF]"],
       html.thirteen-vetura-theme [class*="text-[#007bff]"],
+      html.thirteen-vetura-theme [class*="text-[#2563EB]"],
+      html.thirteen-vetura-theme [class*="text-[#2563eb]"],
+      html.thirteen-vetura-theme [class*="text-[#1D4ED8]"],
+      html.thirteen-vetura-theme [class*="text-[#1d4ed8]"],
       html.thirteen-vetura-theme [class*="text-[#0A2540]"],
       html.thirteen-vetura-theme [class*="text-[#0a2540]"],
       html.thirteen-vetura-theme [class*="text-[#123454]"],
@@ -706,6 +783,16 @@
       html.thirteen-vetura-theme [class*="text-indigo"],
       html.thirteen-vetura-theme [class*="hover:text-blue"]:hover {
         color: var(--vetura-primary) !important;
+      }
+      html.thirteen-vetura-theme [style*="color:#0a2540"],
+      html.thirteen-vetura-theme [style*="color: #0a2540"],
+      html.thirteen-vetura-theme [style*="color:#071624"],
+      html.thirteen-vetura-theme [style*="color: #071624"],
+      html.thirteen-vetura-theme [style*="color:#007bff"],
+      html.thirteen-vetura-theme [style*="color: #007bff"],
+      html.thirteen-vetura-theme [style*="color: rgb(10, 37, 64)"],
+      html.thirteen-vetura-theme [style*="color: rgb(0, 123, 255)"] {
+        color: var(--vetura-text) !important;
       }
       html.thirteen-vetura-theme [class*="bg-blue"],
       html.thirteen-vetura-theme [class*="from-blue"],
@@ -811,11 +898,48 @@
         border-color: var(--vetura-border) !important;
         border-top-color: var(--vetura-primary) !important;
       }
+      html.thirteen-vetura-theme .vehicle-type-option,
+      html.thirteen-vetura-theme .vehicle-type-option *,
+      html.thirteen-vetura-theme .source-switch,
+      html.thirteen-vetura-theme .source-switch *,
+      html.thirteen-vetura-theme .source-switch-label {
+        color: var(--vetura-text) !important;
+      }
+      html.thirteen-vetura-theme .vehicle-type-option:not(.is-active),
+      html.thirteen-vetura-theme .vehicle-type-option:not(.is-active) *,
+      html.thirteen-vetura-theme .source-switch:not(.is-active),
+      html.thirteen-vetura-theme .source-switch:not(.is-active) * {
+        color: var(--vetura-soft) !important;
+      }
+      html.thirteen-vetura-theme .search-select,
+      html.thirteen-vetura-theme .search-select-trigger,
+      html.thirteen-vetura-theme button.search-select-trigger {
+        background: var(--vetura-card) !important;
+        border-color: var(--vetura-border) !important;
+        color: var(--vetura-text) !important;
+        box-shadow: none !important;
+      }
+      html.thirteen-vetura-theme .search-select *,
+      html.thirteen-vetura-theme .search-select-trigger * {
+        color: var(--vetura-text) !important;
+      }
       html.thirteen-vetura-theme .price-summary-panel,
       html.thirteen-vetura-theme .encar-price-summary,
       html.thirteen-vetura-theme .vehicle-action-sidebar section {
         background: var(--vetura-card) !important;
         color: var(--vetura-text) !important;
+      }
+      html.thirteen-vetura-theme [class*="price"],
+      html.thirteen-vetura-theme [class*="Price"],
+      html.thirteen-vetura-theme [class*="bid"],
+      html.thirteen-vetura-theme [class*="Bid"],
+      html.thirteen-vetura-theme [class*="value"],
+      html.thirteen-vetura-theme [class*="Value"],
+      html.thirteen-vetura-theme .catalog-range-field-prefix,
+      html.thirteen-vetura-theme .encar-price-summary__main,
+      html.thirteen-vetura-theme .price-summary-panel [class],
+      html.thirteen-vetura-theme .vehicle-action-sidebar [class*="text-blue"] {
+        color: var(--vetura-price) !important;
       }
       html.thirteen-vetura-theme .vehicle-action-sidebar button,
       html.thirteen-vetura-theme .vehicle-action-sidebar a[class*="bg-blue"] {
@@ -823,16 +947,32 @@
         background-image: none !important;
         color: #080808 !important;
       }
+      img[src*="/brand/korauto-logo"],
+      img[src*="/brand/korauto-icon"],
       img[src*="13vetura.com/assets/logo"] {
         object-fit: contain !important;
+        background: #000000 !important;
+        border-radius: 8px !important;
+        display: inline-block !important;
         max-height: 54px;
         min-width: 118px;
+        padding: 0 !important;
         width: auto;
       }
+	      header img[src*="/brand/korauto-logo"],
+	      footer img[src*="/brand/korauto-logo"],
+	      header img[src*="13vetura.com/assets/logo"],
+	      footer img[src*="13vetura.com/assets/logo"] {
+	        width: clamp(132px, 15vw, 196px) !important;
+	        height: auto !important;
+	        max-height: 46px !important;
+	      }
+	      html.thirteen-vetura-theme img[src*="/brand/korauto-logo"],
+	      html.thirteen-vetura-theme img[src*="/brand/korauto-icon"],
 	      html.thirteen-vetura-theme img[src*="13vetura.com/assets/logo"] {
-	        background: #ffffff !important;
+	        background: #000000 !important;
 	        border-radius: 8px !important;
-	        padding: 4px !important;
+	        box-shadow: none !important;
 	      }
 	      .thirteen-vetura-business-note {
 	        font-size: 0.875rem;
@@ -899,7 +1039,7 @@
 	      }
 	      html.thirteen-vetura-theme .thirteen-vetura-positive,
 	      html.thirteen-vetura-positive {
-	        color: #22c55e !important;
+	        color: var(--vetura-success, #22c55e) !important;
 	        font-weight: 800 !important;
 	      }
 	      .thirteen-vetura-sort-control {
@@ -928,6 +1068,7 @@
 	      html {
 	        -webkit-text-size-adjust: 100%;
 	        text-size-adjust: 100%;
+	        scroll-behavior: smooth;
 	      }
 	      body {
 	        overscroll-behavior-y: none;
@@ -959,6 +1100,20 @@
 	          position: sticky !important;
 	          top: 0 !important;
 	          z-index: 60 !important;
+	          -webkit-backdrop-filter: blur(16px) saturate(150%) !important;
+	          backdrop-filter: blur(16px) saturate(150%) !important;
+	          border-bottom: 1px solid rgba(255,255,255,.10) !important;
+	        }
+	        header > *,
+	        header nav,
+	        header [class*="container"],
+	        header [class*="items-center"] {
+	          min-width: 0 !important;
+	        }
+	        header img[src*="/brand/korauto-logo"],
+	        header img[src*="13vetura.com/assets/logo"] {
+	          width: min(148px, 42vw) !important;
+	          max-height: 38px !important;
 	        }
 	        header nav,
 	        header [class*="navigation"] {
@@ -971,6 +1126,8 @@
 	        }
 	        main {
 	          min-width: 0 !important;
+	          padding-left: max(10px, env(safe-area-inset-left)) !important;
+	          padding-right: max(10px, env(safe-area-inset-right)) !important;
 	        }
 	        section,
 	        article,
@@ -980,12 +1137,21 @@
 	          min-width: 0 !important;
 	        }
 	        article {
-	          border-radius: 8px !important;
+	          border-radius: 14px !important;
 	          margin-inline: 0 !important;
+	          overflow: hidden !important;
+	          transform: translateZ(0);
+	        }
+	        article h2,
+	        article h3,
+	        article a,
+	        article p,
+	        article span {
+	          overflow-wrap: anywhere;
 	        }
 	        article img {
 	          height: auto !important;
-	          max-height: 260px !important;
+	          max-height: 230px !important;
 	          object-fit: cover !important;
 	        }
 	        .catalog-filter-panel,
@@ -1000,11 +1166,47 @@
 	        .quick-filters-panel,
 	        [role="listbox"],
 	        [role="menu"] {
-	          max-height: min(74dvh, 560px) !important;
-	          max-width: calc(100vw - 20px) !important;
+	          border-radius: 16px !important;
+	          max-height: min(76dvh, 560px) !important;
+	          max-width: calc(100vw - 16px) !important;
 	          overflow: auto !important;
 	          -webkit-overflow-scrolling: touch;
 	          transform: translateZ(0);
+	        }
+	        .quick-filters-panel {
+	          height: min(76dvh, 560px) !important;
+	          width: calc(100vw - 16px) !important;
+	        }
+	        .quick-filters-sidebar {
+	          gap: 6px !important;
+	          padding: 8px !important;
+	        }
+	        .quick-filters-tab {
+	          border-radius: 10px !important;
+	          font-size: 13px !important;
+	          min-height: 38px !important;
+	          padding: 8px 9px !important;
+	        }
+	        .quick-filters-heading {
+	          min-height: 42px !important;
+	          padding: 0 10px !important;
+	        }
+	        .quick-filters-heading h3 {
+	          font-size: 16px !important;
+	        }
+	        .quick-filters-options {
+	          gap: 6px !important;
+	          grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+	          padding: 8px !important;
+	        }
+	        .quick-filters-option {
+	          border-radius: 10px !important;
+	          gap: 6px !important;
+	          min-height: 38px !important;
+	          padding: 6px 7px !important;
+	        }
+	        .quick-filters-option-label {
+	          font-size: 13.5px !important;
 	        }
 	        input,
 	        select,
@@ -1032,10 +1234,61 @@
 	          min-height: auto !important;
 	          padding-block: 26px !important;
 	        }
+	        .home-hero-content-shell {
+	          background-image: none !important;
+	          padding: 22px 12px 28px !important;
+	        }
 	        .home-hero-title,
 	        h1 {
-	          font-size: clamp(28px, 9vw, 42px) !important;
-	          line-height: 1.05 !important;
+	          font-size: clamp(27px, 8.2vw, 36px) !important;
+	          line-height: 1.08 !important;
+	        }
+	        [class*="vehicle-gallery"],
+	        [class*="VehicleGallery"],
+	        [class*="price-summary"],
+	        .vehicle-action-sidebar,
+	        .price-summary-panel {
+	          max-width: 100% !important;
+	          min-width: 0 !important;
+	        }
+	      }
+	      @media (max-width: 520px) {
+	        header img[src*="/brand/korauto-logo"],
+	        header img[src*="13vetura.com/assets/logo"] {
+	          width: min(136px, 45vw) !important;
+	          max-height: 34px !important;
+	        }
+	        header a,
+	        header button {
+	          min-height: 38px !important;
+	        }
+	        .thirteen-vetura-theme-toggle {
+	          font-size: 11px !important;
+	          height: 38px !important;
+	          min-width: 38px !important;
+	          padding-inline: 8px !important;
+	        }
+	        .quick-filters-panel {
+	          grid-template-columns: minmax(88px, 32%) minmax(0, 1fr) !important;
+	          height: min(78dvh, 590px) !important;
+	        }
+	        .quick-filters-options {
+	          grid-template-columns: 1fr !important;
+	        }
+	        .quick-filters-option-logo {
+	          height: 22px !important;
+	          width: 22px !important;
+	        }
+	        article img {
+	          max-height: 205px !important;
+	        }
+	        article [class*="border-[#"]:not(button):not(a):not(input):not(select),
+	        article [class*="ring-"]:not(button):not(a):not(input):not(select) {
+	          box-shadow: none !important;
+	        }
+	        article [class*="tracking-"],
+	        article [class*="uppercase"] {
+	          color: var(--vetura-soft) !important;
 	        }
 	      }
 	      @media (prefers-reduced-motion: reduce) {
@@ -1230,9 +1483,13 @@
 	  const optimizeMedia = () => {
 	    let eagerCount = 0;
 	    for (const image of document.images) {
-	      if (image.src.includes("13vetura.com/assets/logo")) {
+	      if (isSiteLogo(image) || image.src.includes("/brand/korauto-") || image.src.includes("13vetura.com/assets/logo")) {
+	        if (image.getAttribute("src") !== business.logoUrl && !image.src.includes("/brand/korauto-icon")) {
+	          image.setAttribute("src", business.logoUrl);
+	        }
 	        image.setAttribute("loading", "eager");
 	        image.setAttribute("fetchpriority", "high");
+	        image.setAttribute("decoding", "async");
 	        continue;
 	      }
 	      image.setAttribute("decoding", "async");
@@ -1660,6 +1917,7 @@
 
 	  const applyAll = () => {
 	    pending = false;
+	    lastAppliedAt = performance.now();
 	    installStyle();
 	    setBlackWhiteThemeEnabled(isBlackWhiteThemeEnabled());
 	    installThemeToggle();
@@ -1685,10 +1943,19 @@
 	    optimizeMedia();
   };
 
-  const schedule = () => {
-    if (pending) return;
-    pending = true;
-    window.requestAnimationFrame(applyAll);
+	  const schedule = () => {
+	    if (pending) return;
+	    const now = performance.now();
+	    const run = () => {
+	      pending = true;
+	      window.requestAnimationFrame(applyAll);
+	    };
+	    if (now - lastAppliedAt < 90) {
+	      window.clearTimeout(deferredSchedule);
+	      deferredSchedule = window.setTimeout(run, 90);
+	      return;
+	    }
+	    run();
   };
 
   const loadRate = async () => {
@@ -1705,26 +1972,31 @@
     }
   };
 
-  const start = () => {
+	  const start = () => {
 	    installStyle();
 	    setBlackWhiteThemeEnabled(isBlackWhiteThemeEnabled());
 	    installHomeNavigation();
     installCarLinkNavigation();
 	    installCatalogCardNavigation();
+	    let domPatchesStarted = false;
 	    const startDomPatches = () => {
+	      if (domPatchesStarted) return;
+	      domPatchesStarted = true;
 	      applyAll();
 	      void loadRate();
 	      new MutationObserver(schedule).observe(document.documentElement, {
 	        childList: true,
 	        subtree: true
 	      });
+	      window.setTimeout(schedule, 250);
 	    };
 	
-	    if (document.readyState === "complete") {
-	      window.setTimeout(startDomPatches, 700);
+	    if (document.readyState === "loading") {
+	      document.addEventListener("DOMContentLoaded", startDomPatches, { once: true });
 	    } else {
-	      window.addEventListener("load", () => window.setTimeout(startDomPatches, 700), { once: true });
+	      startDomPatches();
 	    }
+	    window.addEventListener("load", schedule, { once: true });
   };
 
   if (document.readyState === "loading") {
