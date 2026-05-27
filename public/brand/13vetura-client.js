@@ -1982,30 +1982,49 @@
 	      galleryWrapper.className = 'new-car-gallery';
 	      galleryWrapper.style.cssText = 'margin-bottom: 24px;';
 
-	      // Main viewer
+	      // === SMOOTH CROSSFADE VIEWER (Performance + Design) ===
 	      const mainViewer = document.createElement('div');
-	      mainViewer.style.cssText = 'position:relative; background:#0a0a0a; border-radius:12px; overflow:hidden; aspect-ratio: 16 / 10; display:flex; align-items:center; justify-content:center;';
+	      mainViewer.style.cssText = `
+	        position: relative;
+	        background: #0a0a0a;
+	        border-radius: 12px;
+	        overflow: hidden;
+	        aspect-ratio: 16 / 10;
+	        display: flex;
+	        align-items: center;
+	        justify-content: center;
+	      `;
 
-	      const mainImg = document.createElement('img');
-	      mainImg.style.cssText = 'max-width:100%; max-height:100%; object-fit:contain; transition: opacity 0.2s ease;';
-	      mainImg.loading = 'eager';
-	      mainImg.src = goodImages[0];
+	      // Two image layers for true crossfade
+	      const layerA = document.createElement('img');
+	      const layerB = document.createElement('img');
+
+	      const layerStyle = 'position:absolute; top:0; left:0; width:100%; height:100%; object-fit:contain; transition: opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1); will-change: opacity;';
+
+	      layerA.style.cssText = layerStyle + 'opacity:1; z-index:1;';
+	      layerB.style.cssText = layerStyle + 'opacity:0; z-index:2;';
+
+	      layerA.loading = 'eager';
+	      layerB.loading = 'eager';
+
+	      layerA.src = goodImages[0];
 
 	      // Arrows
 	      const prevBtn = document.createElement('button');
 	      prevBtn.innerHTML = '←';
-	      prevBtn.style.cssText = 'position:absolute; left:12px; top:50%; transform:translateY(-50%); background:rgba(0,0,0,0.65); color:white; border:none; font-size:28px; width:44px; height:44px; border-radius:999px; cursor:pointer; display:flex; align-items:center; justify-content:center; z-index:10;';
+	      prevBtn.style.cssText = 'position:absolute; left:12px; top:50%; transform:translateY(-50%); background:rgba(0,0,0,0.65); color:white; border:none; font-size:28px; width:44px; height:44px; border-radius:999px; cursor:pointer; display:flex; align-items:center; justify-content:center; z-index:10; transition: background 0.2s ease;';
 
 	      const nextBtn = document.createElement('button');
 	      nextBtn.innerHTML = '→';
-	      nextBtn.style.cssText = 'position:absolute; right:12px; top:50%; transform:translateY(-50%); background:rgba(0,0,0,0.65); color:white; border:none; font-size:28px; width:44px; height:44px; border-radius:999px; cursor:pointer; display:flex; align-items:center; justify-content:center; z-index:10;';
+	      nextBtn.style.cssText = 'position:absolute; right:12px; top:50%; transform:translateY(-50%); background:rgba(0,0,0,0.65); color:white; border:none; font-size:28px; width:44px; height:44px; border-radius:999px; cursor:pointer; display:flex; align-items:center; justify-content:center; z-index:10; transition: background 0.2s ease;';
 
 	      // Counter
 	      const counter = document.createElement('div');
-	      counter.style.cssText = 'position:absolute; bottom:12px; right:12px; background:rgba(0,0,0,0.7); color:white; font-size:13px; padding:4px 10px; border-radius:999px; font-weight:600;';
+	      counter.style.cssText = 'position:absolute; bottom:12px; right:12px; background:rgba(0,0,0,0.75); color:white; font-size:13px; padding:5px 12px; border-radius:999px; font-weight:600; z-index:10; letter-spacing:0.5px;';
 	      counter.textContent = `1 / ${goodImages.length}`;
 
-	      mainViewer.appendChild(mainImg);
+	      mainViewer.appendChild(layerA);
+	      mainViewer.appendChild(layerB);
 	      mainViewer.appendChild(prevBtn);
 	      mainViewer.appendChild(nextBtn);
 	      mainViewer.appendChild(counter);
@@ -2016,22 +2035,60 @@
 	      thumbsContainer.className = 'new-gallery-thumbs';
 
 	      let currentIndex = 0;
+	      let activeLayer = 'A'; // 'A' or 'B'
 
-	      const updateMainImage = (index) => {
-	        currentIndex = index;
-	        mainImg.style.opacity = '0.3';
-	        mainImg.src = goodImages[index];
-	        counter.textContent = `${index + 1} / ${goodImages.length}`;
+	      const updateMainImage = (index, instant = false) => {
+	        if (index === currentIndex && !instant) return;
 
-	        // Highlight active thumb
-	        thumbsContainer.querySelectorAll('img').forEach((t, i) => {
-	          t.style.border = i === index ? '3px solid #fff' : '3px solid transparent';
-	        });
+	        const nextSrc = goodImages[index];
+	        const nextLayer = activeLayer === 'A' ? layerB : layerA;
+	        const currentLayer = activeLayer === 'A' ? layerA : layerB;
 
-	        // Preload next image for performance
-	        const nextIdx = (index + 1) % goodImages.length;
-	        const preload = new Image();
-	        preload.src = goodImages[nextIdx];
+	        // Preload the next image for smoothness
+	        const preloadImg = new Image();
+	        preloadImg.src = nextSrc;
+
+	        const doTransition = () => {
+	          nextLayer.src = nextSrc;
+	          nextLayer.style.transition = instant ? 'none' : 'opacity 0.38s cubic-bezier(0.4, 0, 0.2, 1)';
+	          currentLayer.style.transition = instant ? 'none' : 'opacity 0.38s cubic-bezier(0.4, 0, 0.2, 1)';
+
+	          // Crossfade
+	          nextLayer.style.opacity = '1';
+	          nextLayer.style.zIndex = '2';
+	          currentLayer.style.opacity = '0';
+	          currentLayer.style.zIndex = '1';
+
+	          // Swap active layer
+	          activeLayer = activeLayer === 'A' ? 'B' : 'A';
+
+	          counter.textContent = `${index + 1} / ${goodImages.length}`;
+
+	          // Update thumbnails
+	          thumbsContainer.querySelectorAll('img').forEach((t, i) => {
+	            t.style.border = i === index ? '3px solid #fff' : '3px solid transparent';
+	          });
+
+	          currentIndex = index;
+	        };
+
+	        if (instant) {
+	          doTransition();
+	        } else {
+	          // Wait for image to be ready for buttery transition
+	          if (preloadImg.complete) {
+	            doTransition();
+	          } else {
+	            preloadImg.onload = doTransition;
+	            preloadImg.onerror = doTransition; // fallback
+	          }
+	        }
+
+	        // Preload adjacent images for fast navigation
+	        const preloadNext = new Image();
+	        preloadNext.src = goodImages[(index + 1) % goodImages.length];
+	        const preloadPrev = new Image();
+	        preloadPrev.src = goodImages[(index - 1 + goodImages.length) % goodImages.length];
 	      };
 
 	      // Build thumbnails
@@ -2039,13 +2096,13 @@
 	        const thumb = document.createElement('img');
 	        thumb.src = src;
 	        thumb.loading = 'lazy';
-	        thumb.style.cssText = 'width:72px; height:54px; object-fit:cover; border-radius:6px; cursor:pointer; flex-shrink:0; border:3px solid transparent; transition: all 0.15s ease;';
+	        thumb.style.cssText = 'width:76px; height:56px; object-fit:cover; border-radius:6px; cursor:pointer; flex-shrink:0; border:3px solid transparent; transition: border 0.15s ease, transform 0.15s ease;';
 	        
 	        thumb.onclick = () => updateMainImage(index);
 	        thumbsContainer.appendChild(thumb);
 	      });
 
-	      // Arrow handlers
+	      // Arrow handlers (smooth)
 	      prevBtn.onclick = () => {
 	        const newIndex = (currentIndex - 1 + goodImages.length) % goodImages.length;
 	        updateMainImage(newIndex);
@@ -2065,24 +2122,24 @@
 	        if (e.key === 'ArrowRight') nextBtn.click();
 	      });
 
-	      // Assemble
+	      // Assemble new gallery
 	      galleryWrapper.appendChild(mainViewer);
 	      galleryWrapper.appendChild(thumbsContainer);
 
-	      // Insert new gallery where the old one was
+	      // Insert new gallery
 	      if (oldTrigger && oldTrigger.parentNode) {
 	        oldTrigger.parentNode.insertBefore(galleryWrapper, oldTrigger);
 	      } else {
-	        // Fallback insertion
 	        const firstSection = detailRoot.querySelector('section') || detailRoot;
 	        firstSection.prepend(galleryWrapper);
 	      }
 
-	      // Initialize with first image highlighted
+	      // Initialize first image with smooth start
 	      setTimeout(() => {
+	        updateMainImage(0, true); // instant first load
 	        const firstThumb = thumbsContainer.querySelector('img');
 	        if (firstThumb) firstThumb.style.border = '3px solid #fff';
-	      }, 50);
+	      }, 30);
 	    }
   };
 

@@ -3,7 +3,7 @@ import { join } from "node:path";
 
 const publicDir = "public";
 const rebrandScriptBase = "/brand/13vetura-client.js";
-const rebrandScript = `${rebrandScriptBase}?v=20260527-new-gallery-v2`;
+const rebrandScript = `${rebrandScriptBase}?v=20260527-smooth-crossfade-v3`;
 const logoUrl = "https://13vetura.com/assets/logo-EwEQIT7A.png";
 const business = {
   name: "13vetura",
