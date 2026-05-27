@@ -1965,17 +1965,16 @@
     }
 	    applySourceFlags(detailRoot);
 
-	    /* === FULL NEW CAR GALLERY LAYOUT (Design + Performance) === */
+	    /* === CAR GALLERY - SHOW ALL PHOTOS IN A GRID AT ONCE === */
 	    const goodImages = uniqueValues([car.image, ...(Array.isArray(car.images) ? car.images : [])])
 	      .filter(img => img && !/cars2?\.import-motor\.com/i.test(img));
 
 	    if (goodImages.length > 0) {
-	      // Hide original gallery UI
+	      // Hide old limited gallery trigger
 	      const oldTrigger = detailRoot.querySelector('.vehicle-gallery-open-trigger');
-	      const oldButtons = detailRoot.querySelectorAll('.vehicle-gallery-media-button');
-
+	      const oldViewBtns = detailRoot.querySelectorAll('.vehicle-gallery-media-button');
 	      if (oldTrigger) oldTrigger.style.display = 'none';
-	      oldButtons.forEach(b => b.style.display = 'none');
+	      oldViewBtns.forEach(b => b.style.display = 'none');
 
 	      // Create new premium gallery
 	      const galleryWrapper = document.createElement('div');
@@ -2029,10 +2028,9 @@
 	      mainViewer.appendChild(nextBtn);
 	      mainViewer.appendChild(counter);
 
-	      // Thumbnails
+	      // FULL GRID - All photos visible at once
 	      const thumbsContainer = document.createElement('div');
-	      thumbsContainer.style.cssText = 'display:flex; gap:8px; overflow-x:auto; padding:12px 4px; margin-top:8px; scrollbar-width:thin;';
-	      thumbsContainer.className = 'new-gallery-thumbs';
+	      thumbsContainer.style.cssText = 'display:grid; grid-template-columns:repeat(auto-fill, minmax(110px, 1fr)); gap:8px; margin-top:12px;';
 
 	      let currentIndex = 0;
 	      let activeLayer = 'A'; // 'A' or 'B'
