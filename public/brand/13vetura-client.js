@@ -1965,81 +1965,124 @@
     }
 	    applySourceFlags(detailRoot);
 
-	    /* === RELIABLE CAR DETAIL GALLERY (arrows + View photos) === */
+	    /* === FULL NEW CAR GALLERY LAYOUT (Design + Performance) === */
 	    const goodImages = uniqueValues([car.image, ...(Array.isArray(car.images) ? car.images : [])])
 	      .filter(img => img && !/cars2?\.import-motor\.com/i.test(img));
 
 	    if (goodImages.length > 0) {
-	      // Update main photo(s)
-	      detailRoot.querySelectorAll('.vehicle-gallery-open-trigger img, [class*="vehicle-gallery"] img').forEach((img, i) => {
-	        const src = goodImages[i % goodImages.length];
-	        if (img.src !== src) img.src = src;
+	      // Hide original gallery UI
+	      const oldTrigger = detailRoot.querySelector('.vehicle-gallery-open-trigger');
+	      const oldButtons = detailRoot.querySelectorAll('.vehicle-gallery-media-button');
+
+	      if (oldTrigger) oldTrigger.style.display = 'none';
+	      oldButtons.forEach(b => b.style.display = 'none');
+
+	      // Create new premium gallery
+	      const galleryWrapper = document.createElement('div');
+	      galleryWrapper.className = 'new-car-gallery';
+	      galleryWrapper.style.cssText = 'margin-bottom: 24px;';
+
+	      // Main viewer
+	      const mainViewer = document.createElement('div');
+	      mainViewer.style.cssText = 'position:relative; background:#0a0a0a; border-radius:12px; overflow:hidden; aspect-ratio: 16 / 10; display:flex; align-items:center; justify-content:center;';
+
+	      const mainImg = document.createElement('img');
+	      mainImg.style.cssText = 'max-width:100%; max-height:100%; object-fit:contain; transition: opacity 0.2s ease;';
+	      mainImg.loading = 'eager';
+	      mainImg.src = goodImages[0];
+
+	      // Arrows
+	      const prevBtn = document.createElement('button');
+	      prevBtn.innerHTML = '←';
+	      prevBtn.style.cssText = 'position:absolute; left:12px; top:50%; transform:translateY(-50%); background:rgba(0,0,0,0.65); color:white; border:none; font-size:28px; width:44px; height:44px; border-radius:999px; cursor:pointer; display:flex; align-items:center; justify-content:center; z-index:10;';
+
+	      const nextBtn = document.createElement('button');
+	      nextBtn.innerHTML = '→';
+	      nextBtn.style.cssText = 'position:absolute; right:12px; top:50%; transform:translateY(-50%); background:rgba(0,0,0,0.65); color:white; border:none; font-size:28px; width:44px; height:44px; border-radius:999px; cursor:pointer; display:flex; align-items:center; justify-content:center; z-index:10;';
+
+	      // Counter
+	      const counter = document.createElement('div');
+	      counter.style.cssText = 'position:absolute; bottom:12px; right:12px; background:rgba(0,0,0,0.7); color:white; font-size:13px; padding:4px 10px; border-radius:999px; font-weight:600;';
+	      counter.textContent = `1 / ${goodImages.length}`;
+
+	      mainViewer.appendChild(mainImg);
+	      mainViewer.appendChild(prevBtn);
+	      mainViewer.appendChild(nextBtn);
+	      mainViewer.appendChild(counter);
+
+	      // Thumbnails
+	      const thumbsContainer = document.createElement('div');
+	      thumbsContainer.style.cssText = 'display:flex; gap:8px; overflow-x:auto; padding:12px 4px; margin-top:8px; scrollbar-width:thin;';
+	      thumbsContainer.className = 'new-gallery-thumbs';
+
+	      let currentIndex = 0;
+
+	      const updateMainImage = (index) => {
+	        currentIndex = index;
+	        mainImg.style.opacity = '0.3';
+	        mainImg.src = goodImages[index];
+	        counter.textContent = `${index + 1} / ${goodImages.length}`;
+
+	        // Highlight active thumb
+	        thumbsContainer.querySelectorAll('img').forEach((t, i) => {
+	          t.style.border = i === index ? '3px solid #fff' : '3px solid transparent';
+	        });
+
+	        // Preload next image for performance
+	        const nextIdx = (index + 1) % goodImages.length;
+	        const preload = new Image();
+	        preload.src = goodImages[nextIdx];
+	      };
+
+	      // Build thumbnails
+	      goodImages.forEach((src, index) => {
+	        const thumb = document.createElement('img');
+	        thumb.src = src;
+	        thumb.loading = 'lazy';
+	        thumb.style.cssText = 'width:72px; height:54px; object-fit:cover; border-radius:6px; cursor:pointer; flex-shrink:0; border:3px solid transparent; transition: all 0.15s ease;';
+	        
+	        thumb.onclick = () => updateMainImage(index);
+	        thumbsContainer.appendChild(thumb);
 	      });
 
-	      // Reliable arrows on main photo
-	      const galleryContainer = detailRoot.querySelector('.vehicle-gallery-open-trigger')?.parentElement;
-	      if (galleryContainer && !galleryContainer.__galleryReady) {
-	        galleryContainer.__galleryReady = true;
-	        let idx = 0;
+	      // Arrow handlers
+	      prevBtn.onclick = () => {
+	        const newIndex = (currentIndex - 1 + goodImages.length) % goodImages.length;
+	        updateMainImage(newIndex);
+	      };
+	      nextBtn.onclick = () => {
+	        const newIndex = (currentIndex + 1) % goodImages.length;
+	        updateMainImage(newIndex);
+	      };
 
-	        const makeArrow = (dir) => {
-	          const btn = document.createElement('button');
-	          btn.textContent = dir > 0 ? '→' : '←';
-	          btn.style.cssText = 'position:absolute;top:50%;transform:translateY(-50%);background:rgba(0,0,0,0.7);color:white;border:none;font-size:26px;padding:8px 16px;cursor:pointer;z-index:40;border-radius:6px;';
-	          btn.style[dir > 0 ? 'right' : 'left'] = '8px';
-	          btn.onclick = (e) => {
-	            e.stopImmediatePropagation();
-	            idx = (idx + dir + goodImages.length) % goodImages.length;
-	            const mainImg = galleryContainer.querySelector('img');
-	            if (mainImg) mainImg.src = goodImages[idx];
-	          };
-	          const parent = galleryContainer;
-	          if (getComputedStyle(parent).position === 'static') parent.style.position = 'relative';
-	          parent.appendChild(btn);
-	        };
-	        makeArrow(-1);
-	        makeArrow(1);
+	      // Keyboard support
+	      document.addEventListener('keydown', function galleryKey(e) {
+	        if (!galleryWrapper.isConnected) {
+	          document.removeEventListener('keydown', galleryKey);
+	          return;
+	        }
+	        if (e.key === 'ArrowLeft') prevBtn.click();
+	        if (e.key === 'ArrowRight') nextBtn.click();
+	      });
+
+	      // Assemble
+	      galleryWrapper.appendChild(mainViewer);
+	      galleryWrapper.appendChild(thumbsContainer);
+
+	      // Insert new gallery where the old one was
+	      if (oldTrigger && oldTrigger.parentNode) {
+	        oldTrigger.parentNode.insertBefore(galleryWrapper, oldTrigger);
+	      } else {
+	        // Fallback insertion
+	        const firstSection = detailRoot.querySelector('section') || detailRoot;
+	        firstSection.prepend(galleryWrapper);
 	      }
 
-	      // Make "View photos" button work reliably
-	      detailRoot.querySelectorAll('.vehicle-gallery-media-button').forEach(btn => {
-	        if (btn.__galleryBound) return;
-	        btn.__galleryBound = true;
-
-	        btn.onclick = (e) => {
-	          e.preventDefault();
-	          e.stopImmediatePropagation();
-
-	          let current = 0;
-	          const overlay = document.createElement('div');
-	          overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.94);z-index:999999;display:flex;align-items:center;justify-content:center;';
-	          const img = document.createElement('img');
-	          img.style.cssText = 'max-width:94vw;max-height:84vh;object-fit:contain;border-radius:8px;';
-	          img.src = goodImages[0];
-
-	          const prev = document.createElement('button');
-	          prev.textContent = '←'; prev.style.cssText = 'position:absolute;left:20px;top:50%;font-size:32px;color:white;background:rgba(255,255,255,0.1);border:none;padding:10px 18px;cursor:pointer;border-radius:8px;';
-	          prev.onclick = () => { current = (current - 1 + goodImages.length) % goodImages.length; img.src = goodImages[current]; };
-
-	          const next = document.createElement('button');
-	          next.textContent = '→'; next.style.cssText = 'position:absolute;right:20px;top:50%;font-size:32px;color:white;background:rgba(255,255,255,0.1);border:none;padding:10px 18px;cursor:pointer;border-radius:8px;';
-	          next.onclick = () => { current = (current + 1) % goodImages.length; img.src = goodImages[current]; };
-
-	          const close = document.createElement('button');
-	          close.textContent = 'Close'; close.style.cssText = 'position:absolute;top:16px;right:16px;color:white;background:rgba(255,255,255,0.1);border:none;padding:8px 16px;cursor:pointer;border-radius:6px;';
-	          close.onclick = () => overlay.remove();
-
-	          overlay.append(img, prev, next, close);
-	          document.body.appendChild(overlay);
-
-	          const key = (ev) => {
-	            if (ev.key === 'Escape') { overlay.remove(); document.removeEventListener('keydown', key); }
-	            if (ev.key === 'ArrowRight') next.click();
-	            if (ev.key === 'ArrowLeft') prev.click();
-	          };
-	          document.addEventListener('keydown', key);
-	        };
-	      });
+	      // Initialize with first image highlighted
+	      setTimeout(() => {
+	        const firstThumb = thumbsContainer.querySelector('img');
+	        if (firstThumb) firstThumb.style.border = '3px solid #fff';
+	      }, 50);
 	    }
   };
 
