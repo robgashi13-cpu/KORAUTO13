@@ -687,6 +687,37 @@
       html.thirteen-vetura-theme [class*="ring-slate"],
       html.thirteen-vetura-theme [class*="ring-white"] {
         border-color: var(--vetura-border) !important;
+      }
+
+      /* Dark mode visibility improvements across the whole site */
+      html.thirteen-vetura-theme input,
+      html.thirteen-vetura-theme select,
+      html.thirteen-vetura-theme textarea,
+      html.thirteen-vetura-theme .catalog-filter-panel input {
+        background: #1f2937 !important;
+        color: #f3f4f6 !important;
+        border-color: #374151 !important;
+      }
+      html.thirteen-vetura-theme .quick-filters-panel,
+      html.thirteen-vetura-theme .dropdown-pop-panel,
+      html.thirteen-vetura-theme .catalog-filter-panel,
+      html.thirteen-vetura-theme [role="listbox"],
+      html.thirteen-vetura-theme .fancybox__container {
+        background: #111827 !important;
+        color: #e5e7eb !important;
+      }
+      html.thirteen-vetura-theme button,
+      html.thirteen-vetura-theme .vehicle-gallery-media-button {
+        color: #111827 !important;
+      }
+      html.thirteen-vetura-theme .catalog-checkbox-option,
+      html.thirteen-vetura-theme .quick-filters-option {
+        color: #e5e7eb !important;
+      }
+      html.thirteen-vetura-theme .catalog-checkbox-option:hover,
+      html.thirteen-vetura-theme .quick-filters-option:hover {
+        background: #1f2937 !important;
+      }
         --tw-ring-color: var(--vetura-border) !important;
       }
       html.thirteen-vetura-theme input,
@@ -1086,6 +1117,9 @@
 	      select {
 	        touch-action: manipulation;
 	      }
+	      /* ===========================================
+	         COMPREHENSIVE MOBILE POLISH (all pages)
+	         =========================================== */
 	      @media (max-width: 820px) {
 	        html,
 	        body,
@@ -1096,6 +1130,8 @@
 	        body {
 	          padding-bottom: env(safe-area-inset-bottom);
 	        }
+
+	        /* Header & Navigation */
 	        header {
 	          position: sticky !important;
 	          top: 0 !important;
@@ -1124,6 +1160,8 @@
 	        header nav::-webkit-scrollbar {
 	          display: none;
 	        }
+
+	        /* General layout */
 	        main {
 	          min-width: 0 !important;
 	          padding-left: max(10px, env(safe-area-inset-left)) !important;
@@ -1142,17 +1180,53 @@
 	          overflow: hidden !important;
 	          transform: translateZ(0);
 	        }
-	        article h2,
-	        article h3,
-	        article a,
-	        article p,
-	        article span {
-	          overflow-wrap: anywhere;
+
+	        /* Touch friendly */
+	        button,
+	        a,
+	        .vehicle-gallery-media-button,
+	        [role="button"],
+	        input,
+	        select {
+	          min-height: 44px !important;
+	          touch-action: manipulation;
 	        }
+
+	        /* Dropdowns & Menus (very important for usability) */
+	        .dropdown-pop-panel,
+	        .quick-filters-panel,
+	        .catalog-filter-panel,
+	        [role="listbox"],
+	        [role="menu"],
+	        .header-language-menu,
+	        .iti__dropdown-content {
+	          max-height: 70dvh !important;
+	          overflow-y: auto !important;
+	          -webkit-overflow-scrolling: touch;
+	          border-radius: 14px !important;
+	          padding: 8px !important;
+	        }
+
+	        /* Filter panel */
+	        .catalog-filter-panel {
+	          padding: 12px !important;
+	        }
+	        .catalog-checkbox-option,
+	        .catalog-filter-option {
+	          min-height: 44px !important;
+	          padding: 10px 12px !important;
+	        }
+
+	        /* Car cards */
 	        article img {
 	          height: auto !important;
-	          max-height: 230px !important;
+	          max-height: 210px !important;
 	          object-fit: cover !important;
+	        }
+
+	        /* Forms */
+	        input, select, textarea {
+	          font-size: 16px !important;
 	        }
 
 	        /* === FILTER PANEL MOBILE (task 3) === */
@@ -1890,6 +1964,83 @@
       }
     }
 	    applySourceFlags(detailRoot);
+
+	    /* === RELIABLE CAR DETAIL GALLERY (arrows + View photos) === */
+	    const goodImages = uniqueValues([car.image, ...(Array.isArray(car.images) ? car.images : [])])
+	      .filter(img => img && !/cars2?\.import-motor\.com/i.test(img));
+
+	    if (goodImages.length > 0) {
+	      // Update main photo(s)
+	      detailRoot.querySelectorAll('.vehicle-gallery-open-trigger img, [class*="vehicle-gallery"] img').forEach((img, i) => {
+	        const src = goodImages[i % goodImages.length];
+	        if (img.src !== src) img.src = src;
+	      });
+
+	      // Reliable arrows on main photo
+	      const galleryContainer = detailRoot.querySelector('.vehicle-gallery-open-trigger')?.parentElement;
+	      if (galleryContainer && !galleryContainer.__galleryReady) {
+	        galleryContainer.__galleryReady = true;
+	        let idx = 0;
+
+	        const makeArrow = (dir) => {
+	          const btn = document.createElement('button');
+	          btn.textContent = dir > 0 ? '→' : '←';
+	          btn.style.cssText = 'position:absolute;top:50%;transform:translateY(-50%);background:rgba(0,0,0,0.7);color:white;border:none;font-size:26px;padding:8px 16px;cursor:pointer;z-index:40;border-radius:6px;';
+	          btn.style[dir > 0 ? 'right' : 'left'] = '8px';
+	          btn.onclick = (e) => {
+	            e.stopImmediatePropagation();
+	            idx = (idx + dir + goodImages.length) % goodImages.length;
+	            const mainImg = galleryContainer.querySelector('img');
+	            if (mainImg) mainImg.src = goodImages[idx];
+	          };
+	          const parent = galleryContainer;
+	          if (getComputedStyle(parent).position === 'static') parent.style.position = 'relative';
+	          parent.appendChild(btn);
+	        };
+	        makeArrow(-1);
+	        makeArrow(1);
+	      }
+
+	      // Make "View photos" button work reliably
+	      detailRoot.querySelectorAll('.vehicle-gallery-media-button').forEach(btn => {
+	        if (btn.__galleryBound) return;
+	        btn.__galleryBound = true;
+
+	        btn.onclick = (e) => {
+	          e.preventDefault();
+	          e.stopImmediatePropagation();
+
+	          let current = 0;
+	          const overlay = document.createElement('div');
+	          overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.94);z-index:999999;display:flex;align-items:center;justify-content:center;';
+	          const img = document.createElement('img');
+	          img.style.cssText = 'max-width:94vw;max-height:84vh;object-fit:contain;border-radius:8px;';
+	          img.src = goodImages[0];
+
+	          const prev = document.createElement('button');
+	          prev.textContent = '←'; prev.style.cssText = 'position:absolute;left:20px;top:50%;font-size:32px;color:white;background:rgba(255,255,255,0.1);border:none;padding:10px 18px;cursor:pointer;border-radius:8px;';
+	          prev.onclick = () => { current = (current - 1 + goodImages.length) % goodImages.length; img.src = goodImages[current]; };
+
+	          const next = document.createElement('button');
+	          next.textContent = '→'; next.style.cssText = 'position:absolute;right:20px;top:50%;font-size:32px;color:white;background:rgba(255,255,255,0.1);border:none;padding:10px 18px;cursor:pointer;border-radius:8px;';
+	          next.onclick = () => { current = (current + 1) % goodImages.length; img.src = goodImages[current]; };
+
+	          const close = document.createElement('button');
+	          close.textContent = 'Close'; close.style.cssText = 'position:absolute;top:16px;right:16px;color:white;background:rgba(255,255,255,0.1);border:none;padding:8px 16px;cursor:pointer;border-radius:6px;';
+	          close.onclick = () => overlay.remove();
+
+	          overlay.append(img, prev, next, close);
+	          document.body.appendChild(overlay);
+
+	          const key = (ev) => {
+	            if (ev.key === 'Escape') { overlay.remove(); document.removeEventListener('keydown', key); }
+	            if (ev.key === 'ArrowRight') next.click();
+	            if (ev.key === 'ArrowLeft') prev.click();
+	          };
+	          document.addEventListener('keydown', key);
+	        };
+	      });
+	    }
   };
 
 	  const routeMatchesCar = (route, car) => {
