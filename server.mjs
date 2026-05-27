@@ -628,6 +628,48 @@ async function serveVehicleSketch(requestPath, response) {
   }
 }
 
+async function serveProxiedVehiclePhoto(requestPath, response) {
+  const filename = requestPath.split("/").pop();
+
+  // Try local file first
+  const localPath = join(root, "images", "vehicle", filename);
+  if (existsSync(localPath) && statSync(localPath).isFile()) {
+    response.writeHead(200, {
+      "Content-Type": "image/webp",
+      "Cache-Control": "public, max-age=31536000, immutable"
+    });
+    createReadStream(localPath).pipe(response);
+    return;
+  }
+
+  // Proxy from original sources (this makes galleries work like the original site)
+  const candidates = [
+    `https://cars2.import-motor.com/iaai/kia/sportage/2015/44693006/${filename}`,
+    `https://cars2.import-motor.com/${filename}`,
+    `https://cars.import-motor.com/${filename}`
+  ];
+
+  for (const upstream of candidates) {
+    try {
+      const upstreamRes = await fetch(upstream, {
+        headers: { "User-Agent": "Mozilla/5.0 (compatible; 13vetura mirror)" }
+      });
+      if (upstreamRes.ok) {
+        response.writeHead(200, {
+          "Content-Type": upstreamRes.headers.get("content-type") || "image/webp",
+          "Cache-Control": "public, max-age=3600"
+        });
+        Readable.fromWeb(upstreamRes.body).pipe(response);
+        return;
+      }
+    } catch {}
+  }
+
+  // Final fallback
+  response.writeHead(404, { "Content-Type": "text/plain" });
+  response.end("Image not available");
+}
+
 const server = createServer((request, response) => {
   const requestPath = new URL(request.url || "/", `http://${request.headers.host || "localhost"}`).pathname;
   const searchDefaultRedirect = getSearchDefaultRedirect(request);
@@ -661,6 +703,11 @@ const server = createServer((request, response) => {
 
   if (shouldProxyToApi(requestPath)) {
     void proxyToApi(request, response);
+    return;
+  }
+
+  if (requestPath.startsWith("/images/vehicle/")) {
+    void serveProxiedVehiclePhoto(requestPath, response);
     return;
   }
 

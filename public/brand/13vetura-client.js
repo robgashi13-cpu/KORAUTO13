@@ -1154,103 +1154,100 @@
 	          max-height: 230px !important;
 	          object-fit: cover !important;
 	        }
+
+	        /* === FILTER PANEL MOBILE (task 3) === */
 	        .catalog-filter-panel,
 	        .catalog-mobile-filters,
 	        aside[class*="filter"],
-	        [class*="filter"][class*="panel"] {
-	          max-height: calc(100dvh - 74px) !important;
+	        [class*="filter"][class*="panel"],
+	        [class*="filters"][class*="drawer"],
+	        [class*="filter-sidebar"] {
+	          max-height: calc(100dvh - 68px) !important;
 	          overflow-y: auto !important;
-	          -webkit-overflow-scrolling: touch;
+	          -webkit-overflow-scrolling: touch !important;
+	          padding: 12px 14px 20px !important;
+	          border-radius: 16px 16px 0 0 !important;
+	          border: 1px solid var(--vetura-border) !important;
+	          background: var(--vetura-card) !important;
 	        }
+	        .catalog-filter-heading,
+	        .catalog-filter-heading-title {
+	          font-size: 15px !important;
+	          font-weight: 800 !important;
+	          padding-bottom: 6px !important;
+	        }
+	        .catalog-filter-item,
+	        .catalog-filter-body,
+	        .catalog-checkbox-list {
+	          gap: 4px !important;
+	        }
+	        .catalog-checkbox-option,
+	        .catalog-filter-option {
+	          min-height: 42px !important;
+	          padding: 8px 12px !important;
+	          font-size: 15px !important;
+	          border-radius: 10px !important;
+	        }
+	        .catalog-filter-panel input[type="range"],
+	        .catalog-filter-panel input[type="number"] {
+	          min-height: 36px !important;
+	        }
+
+	        /* === DROPDOWNS & MENUS MOBILE (task 7) === */
 	        .dropdown-pop-panel,
 	        .quick-filters-panel,
+	        .header-language-menu,
 	        [role="listbox"],
-	        [role="menu"] {
+	        [role="menu"],
+	        [class*="dropdown"][class*="content"],
+	        [class*="popper"],
+	        .iti__dropdown-content {
 	          border-radius: 16px !important;
-	          max-height: min(76dvh, 560px) !important;
-	          max-width: calc(100vw - 16px) !important;
+	          max-height: min(78dvh, 620px) !important;
+	          max-width: calc(100vw - 12px) !important;
+	          min-width: min(260px, 92vw) !important;
 	          overflow: auto !important;
-	          -webkit-overflow-scrolling: touch;
+	          -webkit-overflow-scrolling: touch !important;
+	          padding: 6px !important;
+	          box-shadow: 0 20px 48px rgba(0,0,0,0.45) !important;
 	          transform: translateZ(0);
+	          font-size: 16px !important;
+	        }
+	        .dropdown-pop-panel button,
+	        .dropdown-pop-panel a,
+	        .quick-filters-option,
+	        [role="option"],
+	        [role="menuitem"] {
+	          min-height: 46px !important;
+	          padding: 10px 14px !important;
+	          font-size: 15.5px !important;
+	          border-radius: 10px !important;
 	        }
 	        .quick-filters-panel {
-	          height: min(76dvh, 560px) !important;
-	          width: calc(100vw - 16px) !important;
+	          height: min(78dvh, 620px) !important;
+	          width: calc(100vw - 12px) !important;
 	        }
 	        .quick-filters-sidebar {
-	          gap: 6px !important;
-	          padding: 8px !important;
+	          gap: 8px !important;
+	          padding: 10px !important;
 	        }
 	        .quick-filters-tab {
 	          border-radius: 10px !important;
-	          font-size: 13px !important;
-	          min-height: 38px !important;
-	          padding: 8px 9px !important;
-	        }
-	        .quick-filters-heading {
+	          font-size: 14px !important;
 	          min-height: 42px !important;
-	          padding: 0 10px !important;
-	        }
-	        .quick-filters-heading h3 {
-	          font-size: 16px !important;
+	          padding: 9px 12px !important;
 	        }
 	        .quick-filters-options {
-	          gap: 6px !important;
+	          gap: 8px !important;
 	          grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-	          padding: 8px !important;
+	          padding: 10px !important;
 	        }
 	        .quick-filters-option {
-	          border-radius: 10px !important;
-	          gap: 6px !important;
-	          min-height: 38px !important;
-	          padding: 6px 7px !important;
+	          min-height: 44px !important;
+	          padding: 8px 10px !important;
 	        }
-	        .quick-filters-option-label {
-	          font-size: 13.5px !important;
-	        }
-	        input,
-	        select,
-	        textarea,
-	        button,
-	        a[role="button"] {
-	          font-size: 16px !important;
-	          min-height: 44px;
-	        }
-	        .thirteen-vetura-theme-toggle {
-	          height: 40px;
-	          min-width: 42px;
-	          padding: 0 10px;
-	        }
-	        .thirteen-vetura-sort-control {
-	          display: grid;
-	          grid-template-columns: 1fr;
-	          margin: 0 0 12px 0;
-	          width: 100%;
-	        }
-	        .thirteen-vetura-sort-control select {
-	          width: 100%;
-	        }
-	        .home-hero-section {
-	          min-height: auto !important;
-	          padding-block: 26px !important;
-	        }
-	        .home-hero-content-shell {
-	          background-image: none !important;
-	          padding: 22px 12px 28px !important;
-	        }
-	        .home-hero-title,
-	        h1 {
-	          font-size: clamp(27px, 8.2vw, 36px) !important;
-	          line-height: 1.08 !important;
-	        }
-	        [class*="vehicle-gallery"],
-	        [class*="VehicleGallery"],
-	        [class*="price-summary"],
-	        .vehicle-action-sidebar,
-	        .price-summary-panel {
-	          max-width: 100% !important;
-	          min-width: 0 !important;
-	        }
+
+
 	      }
 	      @media (max-width: 520px) {
 	        header img[src*="/brand/korauto-logo"],
@@ -1289,6 +1286,60 @@
 	        article [class*="tracking-"],
 	        article [class*="uppercase"] {
 	          color: var(--vetura-soft) !important;
+	        }
+
+	        /* Extra tight mobile alignments + dropdown reachability (tasks 1 + 7) */
+	        .catalog-filter-panel,
+	        .quick-filters-panel {
+	          font-size: 15px !important;
+	        }
+	        .catalog-filter-panel button,
+	        .quick-filters-panel button,
+	        .dropdown-pop-panel button {
+	          min-height: 48px !important;
+	          touch-action: manipulation !important;
+	        }
+	        header nav a,
+	        header nav button {
+	          min-height: 40px !important;
+	          padding-inline: 10px !important;
+	        }
+	        /* Remove excessive blank space on many routes */
+	        main > *:first-child {
+	          margin-top: 4px !important;
+	        }
+	        section + section,
+	        article + article {
+	          margin-top: 10px !important;
+	        }
+
+	        /* === AGGRESSIVE COMPACT CAR DETAILS (task 6) === */
+	        [class*="vehicle-detail"],
+	        main:has([class*="vehicle"][class*="title"]) {
+	          padding: 4px 6px 16px !important;
+	        }
+	        [class*="vehicle-detail"] > div,
+	        [class*="vehicle-detail"] > section {
+	          margin-bottom: 8px !important;
+	          padding: 0 !important;
+	        }
+	        [class*="vehicle-detail"] .grid,
+	        [class*="vehicle-detail"] [class*="grid-cols"] {
+	          gap: 4px !important;
+	        }
+	        [class*="vehicle-detail"] .p-4,
+	        [class*="vehicle-detail"] .p-5,
+	        [class*="vehicle-detail"] .px-4,
+	        [class*="vehicle-detail"] .py-4 {
+	          padding: 6px 8px !important;
+	        }
+	        [class*="vehicle-detail"] .mt-6,
+	        [class*="vehicle-detail"] .mt-8 {
+	          margin-top: 6px !important;
+	        }
+	        [class*="vehicle-detail"] .mb-6,
+	        [class*="vehicle-detail"] .mb-8 {
+	          margin-bottom: 6px !important;
 	        }
 	      }
 	      @media (prefers-reduced-motion: reduce) {
@@ -1877,6 +1928,29 @@
 	    );
 	  };
 
+	  /* === HEADER NAV FIX AFTER CAR DETAILS (task 5) === */
+	  const fixHeaderNavigationAfterDetail = () => {
+	    if (!/\/cars\//.test(location.pathname)) return;
+	    const header = document.querySelector("header");
+	    if (!header) return;
+
+	    const navLinks = header.querySelectorAll('a[href*="/"], button[aria-label*="Korea"], button[aria-label*="SHBA"], button[aria-label*="Koreja"], [class*="source"], [class*="market"]');
+	    navLinks.forEach((el) => {
+	      if (el.__veturaHeaderFixed) return;
+	      el.__veturaHeaderFixed = true;
+
+	      const handler = (ev) => {
+	        const href = el.getAttribute("href");
+	        if (href && href.startsWith("/")) {
+	          ev.preventDefault();
+	          ev.stopImmediatePropagation();
+	          window.location.assign(new URL(href, location.origin).href);
+	        }
+	      };
+	      el.addEventListener("click", handler, { capture: true });
+	    });
+	  };
+
   const patchVehicleDetailFromApi = () => {
     const route = parseVehicleRoute();
     if (!route) {
@@ -1911,7 +1985,8 @@
 	          document.documentElement.classList.add("thirteen-vetura-detail-ready");
 	          document.documentElement.classList.remove("thirteen-vetura-detail-loading");
 	          document.getElementById("thirteen-vetura-detail-hide-style")?.remove();
-	        }, 1000);
+	          fixHeaderNavigationAfterDetail();
+	        }, 420);
 	      });
 	  };
 
@@ -1935,6 +2010,7 @@
 	    applyDefaultAuctionSources();
 	    patchVehicleDetailFromApi();
 	    installImageErrorRepair();
+	    fixHeaderNavigationAfterDetail();
 	    translateAttributes();
 	    translateTextNodes();
 	    applyPageSpecificText();
@@ -1960,16 +2036,16 @@
 
   const loadRate = async () => {
     try {
-      const response = await fetch("/api/exchange-rates", { cache: "no-store" });
+      const response = await fetch("/api/exchange-rates", { cache: "force-cache" });
       const payload = await response.json();
       const rate = Number(payload?.usdToEur || payload?.rates?.EUR);
       if (Number.isFinite(rate) && rate > 0) {
         usdToEur = rate;
-        schedule();
       }
     } catch {
-      schedule();
+      // keep previous rate silently - avoid extra latency (task 2)
     }
+    schedule();
   };
 
 	  const start = () => {
@@ -1999,9 +2075,123 @@
 	    window.addEventListener("load", schedule, { once: true });
   };
 
+  /* === MINIMAL CAR DETAIL GALLERY FIX (to match original behavior) === */
+  const fixCarDetailGallery = () => {
+    if (!/\/cars\//.test(location.pathname)) return;
+
+    const container = document.querySelector('.vehicle-gallery-open-trigger')?.parentElement || document.querySelector('main');
+    if (!container) return;
+
+    // Collect good local images for this car (from the rewritten mirror)
+    const images = Array.from(document.querySelectorAll('img[src*="/images/vehicle/"], a[data-fancybox]'))
+      .map(el => el.getAttribute('src') || el.getAttribute('href'))
+      .filter(src => src && src.includes('/images/vehicle/'))
+      .filter((v, i, a) => a.indexOf(v) === i); // unique
+
+    if (images.length < 2) return;
+
+    let currentIndex = 0;
+
+    // Find the main visible photo (the big one in the gallery area)
+    const mainPhoto = container.querySelector('img') || document.querySelector('.vehicle-gallery-open-trigger img');
+
+    if (!mainPhoto) return;
+
+    // Simple arrow navigation on the main photo area (fixes the "arrow does nothing" issue)
+    const addArrow = (direction) => {
+      const arrow = document.createElement('button');
+      arrow.textContent = direction > 0 ? '→' : '←';
+      arrow.style.cssText = 'position:absolute;top:50%;transform:translateY(-50%);background:rgba(0,0,0,0.6);color:white;border:none;padding:8px 14px;font-size:22px;cursor:pointer;z-index:10;border-radius:4px;';
+      arrow.style[direction > 0 ? 'right' : 'left'] = '12px';
+
+      arrow.addEventListener('click', (e) => {
+        e.stopImmediatePropagation();
+        e.preventDefault();
+        currentIndex = (currentIndex + direction + images.length) % images.length;
+        mainPhoto.src = images[currentIndex];
+        mainPhoto.style.transition = 'opacity 0.15s';
+        mainPhoto.style.opacity = '0.6';
+        setTimeout(() => { mainPhoto.style.opacity = '1'; }, 120);
+      });
+
+      const parent = mainPhoto.parentElement;
+      if (parent && getComputedStyle(parent).position === 'static') {
+        parent.style.position = 'relative';
+      }
+      parent.appendChild(arrow);
+    };
+
+    // Only add arrows if they don't already exist from original
+    if (!container.querySelector('button[style*="position:absolute"]')) {
+      addArrow(-1);
+      addArrow(1);
+    }
+
+    // Make the "View XX photos" button actually open a working gallery
+    const viewButtons = document.querySelectorAll('.vehicle-gallery-media-button, [class*="view"][class*="photo"]');
+    viewButtons.forEach(btn => {
+      if (btn.__galleryFixed) return;
+      btn.__galleryFixed = true;
+
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+
+        // Simple full-screen gallery fallback that works reliably
+        const overlay = document.createElement('div');
+        overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.95);z-index:99999;display:flex;align-items:center;justify-content:center;flex-direction:column;';
+        
+        const img = document.createElement('img');
+        img.style.cssText = 'max-width:92vw;max-height:82vh;object-fit:contain;border-radius:4px;';
+        img.src = images[0];
+
+        let idx = 0;
+        const update = () => { img.src = images[idx]; };
+
+        const prev = document.createElement('button');
+        prev.textContent = '←';
+        prev.style.cssText = 'position:absolute;left:20px;top:50%;font-size:32px;color:white;background:rgba(255,255,255,0.1);border:none;padding:10px 18px;cursor:pointer;';
+        prev.onclick = () => { idx = (idx - 1 + images.length) % images.length; update(); };
+
+        const next = document.createElement('button');
+        next.textContent = '→';
+        next.style.cssText = 'position:absolute;right:20px;top:50%;font-size:32px;color:white;background:rgba(255,255,255,0.1);border:none;padding:10px 18px;cursor:pointer;';
+        next.onclick = () => { idx = (idx + 1) % images.length; update(); };
+
+        const close = document.createElement('button');
+        close.textContent = '✕ Close';
+        close.style.cssText = 'position:absolute;top:20px;right:20px;color:white;background:rgba(255,255,255,0.1);border:none;padding:8px 16px;cursor:pointer;';
+        close.onclick = () => overlay.remove();
+
+        overlay.appendChild(img);
+        overlay.appendChild(prev);
+        overlay.appendChild(next);
+        overlay.appendChild(close);
+        document.body.appendChild(overlay);
+
+        // Keyboard support
+        const onKey = (ev) => {
+          if (ev.key === 'Escape') { overlay.remove(); document.removeEventListener('keydown', onKey); }
+          if (ev.key === 'ArrowRight') { idx = (idx + 1) % images.length; update(); }
+          if (ev.key === 'ArrowLeft')  { idx = (idx - 1 + images.length) % images.length; update(); }
+        };
+        document.addEventListener('keydown', onKey);
+      });
+    });
+  };
+
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", start, { once: true });
   } else {
     start();
   }
+
+  // Run the gallery fix on detail pages after everything loads
+  window.addEventListener('load', () => {
+    setTimeout(fixCarDetailGallery, 600);
+    // Also re-run when the page content changes (SPA-like navigation inside details)
+    new MutationObserver(() => {
+      if (/\/cars\//.test(location.pathname)) fixCarDetailGallery();
+    }).observe(document.body, { childList: true, subtree: true });
+  });
 })();

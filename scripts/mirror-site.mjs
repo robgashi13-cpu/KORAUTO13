@@ -31,7 +31,9 @@ const transparentPng = Buffer.from(
 
 const localAssetOrigins = new Set([
   "https://cars.auctionsapi.com",
-  "https://auctionsapi.com"
+  "https://auctionsapi.com",
+  "https://cars.import-motor.com",
+  "https://cars2.import-motor.com"
 ]);
 
 const pageQueue = [...initialRoutes];
@@ -148,14 +150,28 @@ function toLocalAssetUrl(value, baseUrl = sourceOrigin) {
     return url;
   }
 
+  // Allow vehicle photos from import-motor (these power the car detail galleries)
+  if (path.includes("/iaai/") || path.includes("/copart/") || /\/[A-Z0-9]{17,}-[0-9]+\.(webp|jpg|jpeg|png)$/i.test(path)) {
+    return url;
+  }
+
   return null;
 }
 
 function patchHtml(html) {
-  return html
+  let next = html
     .replaceAll("https://cars.auctionsapi.com", "")
     .replaceAll("https://api-website.com", "")
     .replaceAll("https://auctionsapi.com/images/", "/images/");
+
+  // Rewrite car photos from import-motor to local mirrored copies
+  // so the gallery in car details works with real images like on the original
+  next = next.replaceAll(/https?:\/\/cars2?\.import-motor\.com([^\s"'<>]+)/gi, (match, path) => {
+    const filename = path.split("/").pop();
+    return `/images/vehicle/${filename}`;
+  });
+
+  return next;
 }
 
 async function fetchText(url) {
@@ -196,7 +212,15 @@ async function downloadAsset(assetUrl) {
   if (seenAssets.has(assetKey)) return;
   seenAssets.add(assetKey);
 
-  const outputPath = assetOutputPath(assetUrl);
+  let outputPath = assetOutputPath(assetUrl);
+
+  // Normalize vehicle photos to a clean local folder so gallery images work reliably
+  const isVehiclePhoto = /cars2?\.import-motor\.com/i.test(assetUrl.href);
+  if (isVehiclePhoto) {
+    const filename = assetUrl.pathname.split("/").pop();
+    outputPath = join(outputDir, "images", "vehicle", decodeURIComponent(filename));
+  }
+
   try {
     const data = await fetchBuffer(assetUrl);
     await writeGeneratedFile(outputPath, data);

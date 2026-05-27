@@ -3,7 +3,7 @@ import { join } from "node:path";
 
 const publicDir = "public";
 const rebrandScriptBase = "/brand/13vetura-client.js";
-const rebrandScript = `${rebrandScriptBase}?v=20260526-5`;
+const rebrandScript = `${rebrandScriptBase}?v=20260527-gallery-real-fix`;
 const logoUrl = "https://13vetura.com/assets/logo-EwEQIT7A.png";
 const business = {
   name: "13vetura",
@@ -699,6 +699,12 @@ function patchText(content) {
     .replaceAll("priceCurrency:\"USD\"", "priceCurrency:\"EUR\"")
     .replaceAll("priceCurrency:\"usd\"", "priceCurrency:\"EUR\"");
 
+  // Rewrite any import-motor photo URLs that slipped into JS/text
+  next = next.replaceAll(/https?:\/\/cars2?\.import-motor\.com([^\s"'`<>]+)/gi, (m, p) => {
+    const fn = p.split("/").pop();
+    return `/images/vehicle/${fn}`;
+  });
+
   next = next
     .replaceAll("`-$${", "`-€${")
     .replaceAll("`$${", "`€${")
@@ -718,6 +724,13 @@ function patchHtml(content) {
     /<title>.*?<\/title>/i,
     "<title>13vetura - Vetura nga Koreja e Jugut dhe SHBA</title>"
   );
+
+  // Ensure any remaining import-motor car photos are rewritten to local (for gallery to work)
+  next = next.replaceAll(/https?:\/\/cars2?\.import-motor\.com([^\s"'<>]+)/gi, (m, p) => {
+    const fn = p.split("/").pop();
+    return `/images/vehicle/${fn}`;
+  });
+
   return next;
 }
 
