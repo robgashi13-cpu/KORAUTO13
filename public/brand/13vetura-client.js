@@ -718,6 +718,35 @@
       html.thirteen-vetura-theme .quick-filters-option:hover {
         background: #1f2937 !important;
       }
+
+      /* =====================================================
+         GALLERY RESET + KORAUTOKS-STYLE POLISH (Reverted)
+         Target the original mirrored structure only.
+         ===================================================== */
+      .vehicle-gallery-open-trigger {
+        cursor: pointer;
+      }
+
+      /* Make the photo grid / thumbnails more visible and grid-like (closer to korautoks style) */
+      .vehicle-gallery-open-trigger + * /* rough attempt to target sibling photo lists if present */
+      {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        gap: 8px;
+      }
+
+      /* Style the "View photos" button closer to a typical stock site */
+      .vehicle-gallery-media-button {
+        background: #111827;
+        color: #e5e7eb;
+        border: 1px solid #374151;
+        padding: 8px 16px;
+        border-radius: 6px;
+      }
+
+      .vehicle-gallery-media-button:hover {
+        background: #1f2937;
+      }
         --tw-ring-color: var(--vetura-border) !important;
       }
       html.thirteen-vetura-theme input,
@@ -1965,16 +1994,15 @@
     }
 	    applySourceFlags(detailRoot);
 
-	    /* === CAR GALLERY - SHOW ALL PHOTOS IN A GRID AT ONCE === */
-	    const goodImages = uniqueValues([car.image, ...(Array.isArray(car.images) ? car.images : [])])
-	      .filter(img => img && !/cars2?\.import-motor\.com/i.test(img));
-
-	    if (goodImages.length > 0) {
+	    // [REVERTED] All previous custom gallery injection removed.
+	    // We now rely on the original mirrored HTML + Fancybox structure.
+	    // Styling to match https://korautoks.com will be pure CSS overrides below.
 	      // Hide old limited gallery trigger
 	      const oldTrigger = detailRoot.querySelector('.vehicle-gallery-open-trigger');
 	      const oldViewBtns = detailRoot.querySelectorAll('.vehicle-gallery-media-button');
-	      if (oldTrigger) oldTrigger.style.display = 'none';
-	      oldViewBtns.forEach(b => b.style.display = 'none');
+	      // Revert: make original gallery elements visible again
+	      if (oldTrigger) oldTrigger.style.display = '';
+	      oldViewBtns.forEach(b => b.style.display = '');
 
 	      // Create new premium gallery
 	      const galleryWrapper = document.createElement('div');
@@ -2435,12 +2463,6 @@
     start();
   }
 
-  // Run the gallery fix on detail pages after everything loads
-  window.addEventListener('load', () => {
-    setTimeout(fixCarDetailGallery, 600);
-    // Also re-run when the page content changes (SPA-like navigation inside details)
-    new MutationObserver(() => {
-      if (/\/cars\//.test(location.pathname)) fixCarDetailGallery();
-    }).observe(document.body, { childList: true, subtree: true });
-  });
+  // [REVERTED] Custom gallery fix calls removed.
+  // We are restoring the original mirrored Fancybox behavior + pure CSS styling.
 })();
