@@ -33,13 +33,7 @@
 	  const sourceDefaultAttempts = new Map();
 	  const themeStorageKey = "13vetura:dark-theme-default-v2";
 	  const catalogSortStorageKey = "13vetura:catalog-sort";
-	  try {
-	    if (window.localStorage.getItem(themeStorageKey) !== "0") {
-	      document.documentElement.classList.add("thirteen-vetura-theme");
-	    }
-	  } catch {
-	    document.documentElement.classList.add("thirteen-vetura-theme");
-	  }
+	  document.documentElement.classList.remove("thirteen-vetura-theme");
 
   const exactText = new Map([
     ["ImportAuto", business.name],
@@ -82,9 +76,8 @@
     ["Favorite cars", "Veturat e preferuara"],
     ["Saved inventory", "Lista e ruajtur"],
     ["Browse cars", "Shfleto veturat"],
-    ["Cars from USA and South Korea", "Vetura nga Koreja e Jugut dhe SHBA"],
-    ["Vehicles from USA and South Korea", "Vetura nga Koreja e Jugut dhe SHBA"],
-    ["Vetura nga SHBA dhe Koreja e Jugut", "Vetura nga Koreja e Jugut dhe SHBA"],
+    ["Cars from USA and South Korea", "Vetura nga SHBA dhe Koreja e Jugut"],
+    ["Vehicles from USA and South Korea", "Vetura nga SHBA dhe Koreja e Jugut"],
     ["Filters", "Filtrat"],
     ["Clear all", "Pastro të gjitha"],
     ["Clear selected", "Pastro zgjedhjen"],
@@ -284,16 +277,16 @@
     ["sales@importauto.com", business.emailSales],
     ["shipping.test@importauto.com", business.emailPrimary],
     ["importauto.com", "13vetura.com"],
-    ["Cars from USA and South Korea", "Vetura nga Koreja e Jugut dhe SHBA"],
-    ["cars from USA and South Korea", "vetura nga Koreja e Jugut dhe SHBA"],
-    ["Cars from the USA and South Korea", "Vetura nga Koreja e Jugut dhe SHBA"],
-    ["Cars from the South Korea and USA", "Vetura nga Koreja e Jugut dhe SHBA"],
-    ["Cars from the Koreja e Jugut dhe SHBA", "Vetura nga Koreja e Jugut dhe SHBA"],
-    ["Vehicles from USA and South Korea", "Vetura nga Koreja e Jugut dhe SHBA"],
-    ["vehicles from USA and South Korea", "vetura nga Koreja e Jugut dhe SHBA"],
-	    ["from USA and South Korea", "nga Koreja e Jugut dhe SHBA"],
-	    ["USA and South Korea", "Koreja e Jugut dhe SHBA"],
-	    ["SHBA dhe Koreja e Jugut", "Koreja e Jugut dhe SHBA"],
+    ["Cars from USA and South Korea", "Vetura nga SHBA dhe Koreja e Jugut"],
+    ["cars from USA and South Korea", "vetura nga SHBA dhe Koreja e Jugut"],
+    ["Cars from the USA and South Korea", "Vetura nga SHBA dhe Koreja e Jugut"],
+    ["Cars from the South Korea and USA", "Vetura nga SHBA dhe Koreja e Jugut"],
+    ["Cars from the Koreja e Jugut dhe SHBA", "Vetura nga SHBA dhe Koreja e Jugut"],
+    ["Vehicles from USA and South Korea", "Vetura nga SHBA dhe Koreja e Jugut"],
+    ["vehicles from USA and South Korea", "vetura nga SHBA dhe Koreja e Jugut"],
+	    ["from USA and South Korea", "nga SHBA dhe Koreja e Jugut"],
+	    ["USA and South Korea", "SHBA dhe Koreja e Jugut"],
+	    ["Koreja e Jugut dhe SHBA", "SHBA dhe Koreja e Jugut"],
 	    ["Nga ankandi deri te garazhi juaj", "Nga Koreja te garazhi juaj"],
 	    ["Gjeni veturën e ardhshme në ankand", "Gjeni veturën e ardhshme në Kore"],
 	    ["USA → Klaipeda", "SHBA → Kosovë"],
@@ -321,6 +314,7 @@
     ["Search vehicles", "Kërko vetura"],
     ["Search vehicle", "Kërko veturë"],
     ["Search by VIN or lot number", "Kërko me VIN ose numër loti"],
+    ["OR", "OSE"],
     ["Enter Brand / Model / VIN / Lot", "Shkruaj markën / modelin / VIN / lotin"],
     ["Engine:", "Motori:"],
     ["Odometer:", "Kilometrazhi:"],
@@ -339,6 +333,9 @@
     ["View 17 photos", "Shiko 17 foto"],
     ["View 16 photos", "Shiko 16 foto"],
     ["View 15 photos", "Shiko 15 foto"],
+    ["View 14 photos", "Shiko 14 foto"],
+    ["View 13 photos", "Shiko 13 foto"],
+    ["View 12 photos", "Shiko 12 foto"],
     ["View photos", "Shiko fotot"],
     ["No damage", "Pa dëmtime"],
     ["Accidents free", "Pa aksidente"],
@@ -548,11 +545,13 @@
 	        const url = new URL(href, window.location.origin);
 	        const text = (link.textContent || "").trim().toLowerCase();
 	        const hasLogo = Boolean(link.querySelector('img[src*="/brand/korauto-"], img[src*="13vetura.com/assets/logo"], img[alt*="13vetura"], img[alt*="KORAUTO"]'));
-	        if (url.origin !== window.location.origin || (url.pathname !== "/" && text !== "ballina" && !hasLogo)) return;
+	        const isHeaderOrFooterLink = Boolean(link.closest("header, footer"));
+	        const isHomeLink = url.pathname === "/" || text === "ballina" || hasLogo;
+	        if (url.origin !== window.location.origin || (!isHomeLink && !isHeaderOrFooterLink)) return;
 	
 	        event.preventDefault();
 	        event.stopPropagation();
-	        window.location.assign("/");
+	        window.location.assign(`${url.pathname}${url.search}${url.hash}`);
 	      },
 	      true
 	    );
@@ -628,6 +627,64 @@
     if (document.getElementById("thirteen-vetura-brand-style")) return;
     const style = document.createElement("style");
     style.id = "thirteen-vetura-brand-style";
+	    style.textContent = `
+	      img[src*="/brand/korauto-logo"],
+	      img[src*="/brand/korauto-icon"],
+	      img[src*="13vetura.com/assets/logo"],
+	      img[src*="logo-EwEQIT7A"] {
+	        object-fit: contain !important;
+	        background: #000 !important;
+	        border-radius: 8px !important;
+	      }
+	      header img[src*="/brand/korauto-logo"],
+	      footer img[src*="/brand/korauto-logo"],
+	      header img[src*="13vetura.com/assets/logo"],
+	      footer img[src*="13vetura.com/assets/logo"] {
+	        max-height: 54px !important;
+	        width: auto !important;
+	      }
+	      .header-language-menu,
+	      .mobile-language-switcher,
+	      [aria-label="Select language"],
+	      [aria-label="Zgjidh gjuhën"] {
+	        display: none !important;
+	      }
+	      .home-hero-bg-media,
+	      .home-hero-bg-overlay,
+	      .home-hero-bg-glow,
+	      .home-hero-section img[src*="/images/home/her-top"],
+	      .home-hero-section [style*="her-top"],
+	      .home-hero-content-shell::before,
+	      .home-hero-content-shell::after {
+	        display: none !important;
+	      }
+	      .home-hero-content-shell,
+	      .home-hero-section [style*="background-image"] {
+	        background: #f3f6fa !important;
+	        background-image: none !important;
+	      }
+	      .home-hero-title,
+	      .home-hero-section .home-hero-title {
+	        background: none !important;
+	        color: #071624 !important;
+	        -webkit-text-fill-color: currentColor !important;
+	        text-shadow: none !important;
+	      }
+	      .home-hero-section p,
+	      .home-hero-section [class*="text-white"] {
+	        color: #334155 !important;
+	        -webkit-text-fill-color: currentColor !important;
+	        text-shadow: none !important;
+	      }
+	      @media (max-width: 1279px) {
+	        .home-hero-content-shell {
+	          background: #f3f6fa !important;
+	          background-image: none !important;
+	        }
+	      }
+	    `;
+	    document.head.appendChild(style);
+	    return;
     style.textContent = `
 	      html.thirteen-vetura-theme {
 	        color-scheme: dark;
@@ -971,6 +1028,18 @@
       html.thirteen-vetura-theme .source-switch:not(.is-active) * {
         color: var(--vetura-soft) !important;
       }
+      /* 3. Copart / IAAI toggles: visually "off" (dimmed) by default until user clicks them.
+         Strong rules for both homepage quick-filters and catalog filter panel. */
+      .source-switch:not(.is-active),
+      button.source-switch:not(.is-active),
+      [class*="source-switch"]:not(.is-active) {
+        opacity: 0.5 !important;
+        filter: grayscale(0.3);
+      }
+      .source-switch:not(.is-active):hover,
+      button.source-switch:not(.is-active):hover {
+        opacity: 0.75 !important;
+      }
       html.thirteen-vetura-theme .search-select,
       html.thirteen-vetura-theme .search-select-trigger,
       html.thirteen-vetura-theme button.search-select-trigger {
@@ -1078,15 +1147,24 @@
 	      [class*="price-summary"] [class*="text-blue"] {
 	        color: #ffffff !important;
 	      }
+	      /* 1. Remove homepage hero background picture behind the title (Vetura nga Koreja e Jugut dhe SHBA) */
+	      .home-hero-section,
+	      .home-hero-section *,
+	      .home-hero-bg-media,
+	      .home-hero-bg-overlay,
+	      .home-hero-bg-glow,
 	      .home-hero-section img[src*="/images/home/her-top"],
-	      .home-hero-section .home-hero-bg-overlay,
-	      .home-hero-section .home-hero-bg-glow {
-	        display: none !important;
+	      .home-hero-section [style*="background-image"],
+	      .home-hero-section::before,
+	      .home-hero-section::after {
+	        background-image: none !important;
+	        background: transparent !important;
 	      }
 	      .home-hero-section {
 	        background: #f3f6fa !important;
 	      }
-	      .home-hero-title {
+	      .home-hero-title,
+	      .home-hero-section .home-hero-title {
 	        background: none !important;
 	        color: #0f172a !important;
 	        -webkit-text-fill-color: currentColor !important;
@@ -1096,6 +1174,17 @@
 	      }
 	      html.thirteen-vetura-theme .home-hero-title {
 	        color: #ffffff !important;
+	      }
+	      /* 2. Hide blog tab / links everywhere (strong CSS + JS removal) */
+	      a[href*="/blog"],
+	      a[href="/blog"],
+	      button[aria-label*="blog" i],
+	      [class*="blog"]:not([class*="blog-card"]):not(article),
+	      .header-blog,
+	      nav [href*="blog"] {
+	        display: none !important;
+	        visibility: hidden !important;
+	        pointer-events: none !important;
 	      }
 	      html.thirteen-vetura-theme .thirteen-vetura-positive,
 	      html.thirteen-vetura-positive {
@@ -1993,7 +2082,9 @@
       }
     }
 	    applySourceFlags(detailRoot);
+	  };
 
+	  /*
 	    // [REVERTED] All previous custom gallery injection removed.
 	    // We now rely on the original mirrored HTML + Fancybox structure.
 	    // Styling to match https://korautoks.com will be pure CSS overrides below.
@@ -2169,6 +2260,8 @@
 	    }
   };
 
+	  */
+
 	  const routeMatchesCar = (route, car) => {
 	    if (!route || !car || typeof car !== "object") return false;
 	    if (route.lot && String(car.lot || "") !== String(route.lot)) return false;
@@ -2271,29 +2364,16 @@
 	    pending = false;
 	    lastAppliedAt = performance.now();
 	    installStyle();
-	    setBlackWhiteThemeEnabled(isBlackWhiteThemeEnabled());
-	    installThemeToggle();
+	    document.documentElement.classList.remove("thirteen-vetura-theme");
 	    removeLanguageControls();
-	    removeBlogLinks();
 	    applyMeta();
 	    applyLogo();
 	    applyBusinessLinks();
-    normalizeCarLinks();
 	    normalizeSearchLinks();
-	    reorderKoreaBeforeUsa();
-	    reorderBrandOptions();
-	    installSortControl();
-	    applyCatalogSort();
 	    applyDefaultAuctionSources();
-	    patchVehicleDetailFromApi();
-	    installImageErrorRepair();
-	    fixHeaderNavigationAfterDetail();
 	    translateAttributes();
 	    translateTextNodes();
 	    applyPageSpecificText();
-	    applySourceFlags();
-	    markPositiveValues();
-	    optimizeMedia();
   };
 
 	  const schedule = () => {
@@ -2327,10 +2407,8 @@
 
 	  const start = () => {
 	    installStyle();
-	    setBlackWhiteThemeEnabled(isBlackWhiteThemeEnabled());
+	    document.documentElement.classList.remove("thirteen-vetura-theme");
 	    installHomeNavigation();
-    installCarLinkNavigation();
-	    installCatalogCardNavigation();
 	    let domPatchesStarted = false;
 	    const startDomPatches = () => {
 	      if (domPatchesStarted) return;
